@@ -1,0 +1,116 @@
+{
+  "info": {
+    "name": "CliniSign Multi-IPS",
+    "description": "Pruebas locales. 1) Login SUPERADMIN 2) Registrar IPS 3) Login IPS 4) Módulos.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login SUPERADMIN",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{superEmail}}\",\n  \"password\": \"{{superPass}}\"\n}" },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "Login usuario IPS",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"siansalud2024@hotmail.com\",\n  \"password\": \"adminips123456\",\n  \"ipsId\": {{ipsId}}\n}" },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "Listar IPS publicas (login)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/ips/list" }
+        }
+      ]
+    },
+    {
+      "name": "SUPERADMIN IPS",
+      "item": [
+        {
+          "name": "Listar IPS admin",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/api/ips/admin" }
+        },
+        {
+          "name": "Registrar IPS",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"AMBULANCIAS SIAN SALUD S.A.S.\",\n  \"nit\": \"9018065095\",\n  \"dv\": \"12\",\n  \"ciudad\": \"Medellín\",\n  \"adminEmail\": \"siansalud2024@hotmail.com\",\n  \"adminPassword\": \"adminips123456\",\n  \"adminNombre\": \"Wilson Sierra\",\n  \"adminDocumento\": \"1128422718\"\n}" },
+            "url": "{{baseUrl}}/api/ips/create"
+          }
+        },
+        {
+          "name": "Resumen tablas IPS",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/api/superadmin/ips/{{ipsId}}/resumen" }
+        },
+        {
+          "name": "Staff de la IPS",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/api/superadmin/ips/{{ipsId}}/usuarios" }
+        },
+        {
+          "name": "Crear usuario staff",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Ana\",\n  \"apellido\": \"Auxiliar\",\n  \"email\": \"ana@ips.com\",\n  \"documento\": \"123\",\n  \"rol\": \"AUXILIAR\",\n  \"password\": \"Auxiliar123\"\n}" },
+            "url": "{{baseUrl}}/api/superadmin/ips/{{ipsId}}/usuarios"
+          }
+        },
+        {
+          "name": "Config WhatsApp IPS",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"whatsappEnabled\": false,\n  \"whatsappToken\": \"\",\n  \"whatsappPhoneNumberId\": \"\",\n  \"whatsappFrom\": \"573001112233\"\n}" },
+            "url": "{{baseUrl}}/api/ips/{{ipsId}}/config"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pacientes",
+      "item": [
+        { "name": "Listar", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "X-Ips-Id", "value": "{{ipsId}}" }], "url": "{{baseUrl}}/api/pacientes" } },
+        { "name": "Crear", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "X-Ips-Id", "value": "{{ipsId}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"documento\": \"100200300\",\n  \"nombre\": \"Pedro\",\n  \"apellido\": \"Lopez\",\n  \"telefono\": \"3001234567\",\n  \"ciudad\": \"Medellín\",\n  \"eps\": \"Sura\"\n}" }, "url": "{{baseUrl}}/api/pacientes" } }
+      ]
+    },
+    {
+      "name": "Agenda",
+      "item": [
+        { "name": "Listar citas", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "X-Ips-Id", "value": "{{ipsId}}" }], "url": "{{baseUrl}}/api/citas" } },
+        { "name": "Citas de hoy", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "X-Ips-Id", "value": "{{ipsId}}" }], "url": "{{baseUrl}}/api/citas/hoy" } },
+        { "name": "Resumen agenda dashboard", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "X-Ips-Id", "value": "{{ipsId}}" }], "url": "{{baseUrl}}/api/citas/resumen" } },
+        { "name": "Crear cita", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "X-Ips-Id", "value": "{{ipsId}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"pacienteId\": {{pacienteId}},\n  \"fechaHora\": \"2026-09-01T09:30\",\n  \"tipo\": \"CONTROL\",\n  \"motivo\": \"Control post traslado\",\n  \"lugar\": \"Sede Medellín\",\n  \"telefonoWhatsapp\": \"3001234567\",\n  \"recordatorioMinutos\": 60\n}" }, "url": "{{baseUrl}}/api/citas" } },
+        { "name": "Enviar recordatorio WhatsApp", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "X-Ips-Id", "value": "{{ipsId}}" }], "url": "{{baseUrl}}/api/citas/{{citaId}}/recordatorio" } }
+      ]
+    },
+    {
+      "name": "Operación IPS",
+      "item": [
+        { "name": "Ambulancias", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "X-Ips-Id", "value": "{{ipsId}}" }], "url": "{{baseUrl}}/api/ambulancias" } },
+        { "name": "Solicitudes", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "X-Ips-Id", "value": "{{ipsId}}" }], "url": "{{baseUrl}}/api/solicitudes" } },
+        { "name": "Historias", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "X-Ips-Id", "value": "{{ipsId}}" }], "url": "{{baseUrl}}/api/historias-clinicas" } },
+        { "name": "Consentimientos", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "X-Ips-Id", "value": "{{ipsId}}" }], "url": "{{baseUrl}}/api/consentimientos" } },
+        { "name": "Estadísticas", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }, { "key": "X-Ips-Id", "value": "{{ipsId}}" }], "url": "{{baseUrl}}/api/reportes/estadisticas" } }
+      ]
+    }
+  ]
+}

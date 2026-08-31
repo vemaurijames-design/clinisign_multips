@@ -1,0 +1,202 @@
+package com.clinisign.config;
+
+import com.clinisign.master.entity.Ips;
+import com.clinisign.master.entity.IpsConfig;
+import com.clinisign.master.repository.IpsConfigRepository;
+import com.clinisign.master.repository.IpsRepository;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
+
+@Component
+@Slf4j
+public class DataSourceManager {
+
+    private static final Pattern SAFE_IDENT = Pattern.compile("^[a-zA-Z0-9_]+$");
+
+    @Value("${provisioning.datasource.url}")
+    private String provisioningUrl;
+    @Value("${provisioning.datasource.username}")
+    private String provisioningUser;
+    @Value("${provisioning.datasource.password}")
+    private String provisioningPass;
+    @Value("${tenant.datasource.host:localhost}")
+    private String tenantHost;
+    @Value("${tenant.datasource.port:5432}")
+    private int tenantPort;
+
+    private final IpsRepository ipsRepository;
+    private final IpsConfigRepository ipsConfigRepository;
+    private final ObjectProvider<RoutingDataSource> routingProvider;
+    private final PasswordEncoder passwordEncoder;
+    private final Map<Long, HikariDataSource> cache = new ConcurrentHashMap<>();
+
+    public DataSourceManager(IpsRepository ipsRepository,
+                             IpsConfigRepository ipsConfigRepository,
+                             ObjectProvider<RoutingDataSource> routingProvider,
+                             PasswordEncoder passwordEncoder) {
+        this.ipsRepository = ipsRepository;
+        this.ipsConfigRepository = ipsConfigRepository;
+        this.routingProvider = routingProvider;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    public DataSource getDataSource(Long ipsId) {
+        HikariDataSource existing = cache.get(ipsId);
+        if (existing != null && !existing.isClosed()) {
+            return existing;
+        }
+        synchronized (this) {
+            existing = cache.get(ipsId);
+            if (existing != null && !existing.isClosed()) {
+                return existing;
+            }
+            return createAndCache(ipsId);
+        }
+    }
+
+    public DataSource createDataSourceForIps(Ips ips) {
+        String dbUrl = "jdbc:postgresql://" + tenantHost + ":" + tenantPort + "/" + ips.getBdNombre();
+        HikariConfig hc = new HikariConfig();
+        hc.setJdbcUrl(dbUrl);
+        hc.setUsername(provisioningUser);
+        hc.setPassword(provisioningPass);
+        hc.setDriverClassName("org.postgresql.Driver");
+        hc.setMaximumPoolSize(5);
+        hc.setMinimumIdle(1);
+        hc.setPoolName("tenant-" + ips.getId());
+        return new HikariDataSource(hc);
+    }
+
+    private HikariDataSource createAndCache(Long ipsId) {
+        Ips ips = ipsRepository.findById(ipsId)
+                .orElseThrow(() -> new IllegalArgumentException("IPS no encontrada: " + ipsId));
+        HikariDataSource ds = (HikariDataSource) createDataSourceForIps(ips);
+        cache.put(ipsId, ds);
+        try {
+            RoutingDataSource routing = routingProvider.getIfAvailable();
+            if (routing != null && !routing.hasTenant(ipsId)) {
+                routing.addDataSource(ipsId, ds);
+            }
+        } catch (Exception e) {
+            log.warn("No se pudo registrar el pool en el router (la BD sí existe): {}", e.getMessage());
+        }
+        log.info("DataSource creado para IPS {} ({})", ipsId, ips.getBdNombre());
+        return ds;
+    }
+
+    public void registerExisting(Long ipsId, DataSource ds) {
+        if (ds instanceof HikariDataSource hikari) {
+            cache.put(ipsId, hikari);
+        }
+    }
+
+    public void provisionTenant(Ips ips, String adminEmail, String adminPassword,
+                                String adminNombre, String adminDocumento) {
+        String bdNombre = requireSafe(ips.getBdNombre(), "nombre de BD");
+        log.info("Provisionando BD {} para IPS {}", bdNombre, ips.getNombre());
+
+        try (Connection conn = DriverManager.getConnection(provisioningUrl, provisioningUser, provisioningPass)) {
+            try (Statement st = conn.createStatement()) {
+                st.execute("CREATE DATABASE " + quote(bdNombre));
+            } catch (Exception e) {
+                log.warn("BD {} ya existe o error: {}", bdNombre, e.getMessage());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error conectando al servidor PostgreSQL: " + e.getMessage(), e);
+        }
+
+        String tenantUrl = provisioningUrl.endsWith("/")
+                ? provisioningUrl + bdNombre
+                : provisioningUrl + "/" + bdNombre;
+
+        try (Connection tconn = DriverManager.getConnection(tenantUrl, provisioningUser, provisioningPass)) {
+            ScriptUtils.executeSqlScript(tconn, new ClassPathResource("schema-tenant.sql"));
+            insertRoles(tconn);
+            insertAdminIps(tconn, adminEmail, adminPassword, adminNombre, adminDocumento);
+        } catch (Exception e) {
+            throw new RuntimeException("Error ejecutando esquema tenant: " + e.getMessage(), e);
+        }
+
+        if (ipsConfigRepository.findByIpsId(ips.getId()).isEmpty()) {
+            IpsConfig config = new IpsConfig();
+            config.setIpsId(ips.getId());
+            config.setSmtpHost("smtp.gmail.com");
+            config.setSmtpPort(587);
+            config.setSmtpUsername(ips.getCorreo());
+            config.setSmtpPassword("");
+            config.setSmtpAuth(true);
+            config.setSmtpStarttls(true);
+            config.setCorreoFrom(ips.getCorreo());
+            ipsConfigRepository.save(config);
+        }
+
+        getDataSource(ips.getId());
+        log.info("BD {} provisionada correctamente", bdNombre);
+    }
+
+    private void insertRoles(Connection conn) throws Exception {
+        String[] roles = {"ADMINIPS", "AUXILIAR", "RADIOPERADOR", "TECNICO", "CALIDAD"};
+        for (String rol : roles) {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO roles (nombre) VALUES (?) ON CONFLICT (nombre) DO NOTHING")) {
+                ps.setString(1, rol);
+                ps.executeUpdate();
+            }
+        }
+    }
+
+    private void insertAdminIps(Connection conn, String email, String rawPassword,
+                                String nombre, String documento) throws Exception {
+        Long rolId;
+        try (PreparedStatement ps = conn.prepareStatement("SELECT id FROM roles WHERE nombre = 'ADMINIPS'")) {
+            ResultSet rs = ps.executeQuery();
+            if (!rs.next()) {
+                throw new RuntimeException("Rol ADMINIPS no encontrado");
+            }
+            rolId = rs.getLong(1);
+        }
+
+        String hash = passwordEncoder.encode(rawPassword != null && !rawPassword.isBlank()
+                ? rawPassword : "adminips123456");
+
+        try (PreparedStatement ps = conn.prepareStatement(
+                "INSERT INTO usuarios (nombre, email, password, documento, rol_id, activo) " +
+                        "VALUES (?, ?, ?, ?, ?, true) ON CONFLICT (email) DO NOTHING")) {
+            ps.setString(1, nombre != null ? nombre : "Administrador IPS");
+            ps.setString(2, email);
+            ps.setString(3, hash);
+            ps.setString(4, documento);
+            ps.setLong(5, rolId);
+            ps.executeUpdate();
+        }
+        log.info("ADMINIPS creado: {}", email);
+    }
+
+    private String requireSafe(String ident, String label) {
+        if (ident == null || !SAFE_IDENT.matcher(ident).matches()) {
+            throw new IllegalArgumentException("Identificador inválido de " + label + ": " + ident);
+        }
+        return ident;
+    }
+
+    private String quote(String ident) {
+        return "\"" + ident + "\"";
+    }
+}

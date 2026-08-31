@@ -1,0 +1,49 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import PrivateRoute from './components/PrivateRoute';
+import RequireIps from './components/RequireIps';
+import Layout from './components/Layout';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Pacientes from './pages/Pacientes';
+import Usuarios from './pages/Usuarios';
+import Ambulancias from './pages/Ambulancias';
+import Solicitudes from './pages/Solicitudes';
+import HistoriaClinica from './pages/HistoriaClinica';
+import Consentimientos from './pages/Consentimientos';
+import Reportes from './pages/Reportes';
+import ListIps from './pages/ListIps';
+import CreateIps from './pages/CreateIps';
+import Agenda from './pages/Agenda';
+
+function AppRoutes() {
+  const { token } = useAuth();
+  if (!token) return <Login />;
+  return (
+    <Layout>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/agenda" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','AUXILIAR','RADIOPERADOR']}><RequireIps><Agenda /></RequireIps></PrivateRoute>} />
+        <Route path="/pacientes" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','AUXILIAR']}><RequireIps><Pacientes /></RequireIps></PrivateRoute>} />
+        <Route path="/usuarios" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS']}><Usuarios /></PrivateRoute>} />
+        <Route path="/ambulancias" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','TECNICO']}><RequireIps><Ambulancias /></RequireIps></PrivateRoute>} />
+        <Route path="/solicitudes" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','RADIOPERADOR']}><RequireIps><Solicitudes /></RequireIps></PrivateRoute>} />
+        <Route path="/historias-clinicas" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','AUXILIAR']}><RequireIps><HistoriaClinica /></RequireIps></PrivateRoute>} />
+        <Route path="/consentimientos" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','AUXILIAR']}><RequireIps><Consentimientos /></RequireIps></PrivateRoute>} />
+        <Route path="/reportes" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','CALIDAD']}><RequireIps><Reportes /></RequireIps></PrivateRoute>} />
+        <Route path="/ips" element={<PrivateRoute roles={['SUPERADMIN']}><ListIps /></PrivateRoute>} />
+        <Route path="/ips/create" element={<PrivateRoute roles={['SUPERADMIN']}><CreateIps /></PrivateRoute>} />
+      </Routes>
+    </Layout>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
