@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { citaService, reporteService, superadminService } from '../services/rest';
+import { citaService, consentimientoService, historiaClinicaService, notificacionService, reporteService, solicitudService, superadminService } from '../services/rest';
+import BuscadorPaciente from '../components/BuscadorPaciente';
 import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
   const { rol, ipsId, ipsNombre } = useAuth();
   const [stats, setStats] = useState<any>({});
   const [agenda, setAgenda] = useState<any>({ agendaHoy: [], agendaProximas: [] });
+  const [exp, setExp] = useState<any>(null);
+  const [expHc, setExpHc] = useState<any[]>([]);
+  const [expCons, setExpCons] = useState<any[]>([]);
+  const [notis, setNotis] = useState<any[]>([]);
+  const [sols, setSols] = useState<any[]>([]);
   const tenantId = ipsId && ipsId !== 'null' ? Number(ipsId) : null;
 
   useEffect(() => {
@@ -17,6 +23,10 @@ export default function Dashboard() {
     }
     if (tenantId || rol !== 'SUPERADMIN') {
       citaService.resumen().then(res => setAgenda(res.data)).catch(() => {});
+      notificacionService.listar().then(r => setNotis(r.data || [])).catch(() => {});
+      solicitudService.listar().then(r => setSols((r.data || []).filter((s: any) =>
+        ['PENDIENTE', 'ASIGNADA', 'EN_CURSO'].includes(String(s.estado || '').toUpperCase())
+      ))).catch(() => {});
     }
   }, [rol, ipsId]);
 
@@ -24,7 +34,7 @@ export default function Dashboard() {
     return (
       <div className="card">
         <h2>Panel SUPERADMIN</h2>
-        <p className="hint">Seleccione o registre una IPS para ver módulos, staff, agenda y tablas de esa BD.</p>
+        <p className="hint">Seleccione una IPS en la barra para ver cifras reales de esa BD.</p>
         <div className="toolbar">
           <Link to="/ips"><button className="btn-primary">Gestionar IPS</button></Link>
           <Link to="/ips/create"><button>Registrar IPS</button></Link>
@@ -51,31 +61,81 @@ export default function Dashboard() {
         ['ambulanciasDisponibles', 'Ambulancias disponibles'],
       ];
 
+  const max = Math.max(1, ...cards.map(([k]) => Number(stats[k] ?? agenda[k] ?? 0)));
+
   return (
     <div>
       <div className="page-head">
         <div>
           <h2>Dashboard</h2>
-          <p className="hint">{ipsNombre || 'Panel'} — agenda del día y módulos de esta IPS.</p>
+          <p className="hint">{ipsNombre || 'Panel'} — cifras tomadas de la BD de esta IPS.</p>
         </div>
-        <Link to="/agenda"><button className="btn-primary">Abrir agenda</button></Link>
+        <div className="toolbar">
+          <Link to="/agenda"><button className="btn-primary">Agenda</button></Link>
+          <Link to="/historias-clinicas"><button>Historias</button></Link>
+          <Link to="/consentimientos"><button>Consentimientos PDF</button></Link>
+          <Link to="/pacientes"><button>Pacientes</button></Link>
+        </div>
       </div>
-      <div className="grid-stats">
-        {cards.map(([k, label]) => (
-          <div className="card-stat" key={k}>
-            <h3>{stats[k] ?? agenda[k] ?? '—'}</h3>
-            <p>{label}</p>
-          </div>
+      <div className="card">
+        <h3>Avisos del radiooperador</h3>
+        {(notis || []).length === 0 && <p className="hint">Sin notificaciones nuevas en esta IPS.</p>}
+        {(notis || []).slice(0, 8).map((n: any) => (
+          <p key={n.id}><strong>{n.titulo || 'Aviso'}</strong>: {n.mensaje}</p>
+        ))}
+        <h4>Solicitudes activas</h4>
+        {(sols || []).length === 0 && <p className="hint">No hay solicitudes pendientes o en curso.</p>}
+        {(sols || []).slice(0, 8).map((s: any) => (
+          <p key={s.id} className="hint">{s.tipo || s.prioridad || 'Solicitud'} · {s.estado} · {s.direccionOrigen || s.origen || ''} <Link to="/solicitudes">abrir</Link></p>
         ))}
       </div>
+      <div className="grid-stats">
+        {cards.map(([k, label]) => {
+          const val = Number(stats[k] ?? agenda[k] ?? 0);
+          return (
+            <div className="card-stat" key={k}>
+              <h3>{stats[k] ?? agenda[k] ?? 0}</h3>
+              <p>{label}</p>
+              <div style={{ height: 8, background: '#e6eef8', borderRadius: 8, marginTop: 8 }}>
+                <div style={{ width: `${Math.round((val / max) * 100)}%`, height: 8, background: '#0b63c8', borderRadius: 8 }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
+      <div className="card">
+        <h3>Historial del paciente</h3>
+        <p className="hint">Busque por cédula o nombre. Verá HC y consentimientos con PDF.</p>
+        <BuscadorPaciente onElegir={async (p: any) => {
+          setExp(p);
+          const [hc, cons] = await Promise.all([
+            historiaClinicaService.porPaciente(p.id).catch(() => ({ data: [] })),
+            consentimientoService.porDocumento(p.documento).catch(() => ({ data: [] })),
+          ]);
+          setExpHc(hc.data || []);
+          setExpCons(cons.data || []);
+        }} />
+        {exp && (
+          <div>
+            <p><strong>{exp.nombre} {exp.apellido}</strong> · {exp.documento} · {exp.telefono}</p>
+            <p className="hint">Historias: {expHc.length} · Consentimientos: {expCons.length}</p>
+            {expHc.map((h: any) => (
+              <p key={'h'+h.id}><a href={historiaClinicaService.pdfUrl(h.id)} target="_blank" rel="noreferrer">HC #{h.id} PDF</a></p>
+            ))}
+            {expCons.map((c: any) => (
+              <p key={'c'+c.id}><a href={consentimientoService.pdfUrl(c.id)} target="_blank" rel="noreferrer">{c.codigo}-{String(c.consecutivo || c.id).padStart(4,'0')} {c.tipo} PDF</a></p>
+            ))}
+          </div>
+        )}
+      </div>
       <h3>Citas de hoy</h3>
       <div className="table-wrap">
         <table className="data-table">
           <thead><tr><th>Hora</th><th>Paciente</th><th>Motivo</th><th>WhatsApp</th><th>Estado</th></tr></thead>
           <tbody>
             {(agenda.agendaHoy || []).length === 0 && (
-              <tr><td colSpan={5}>No hay citas para hoy.</td></tr>
+              <tr><td colSpan={5}>No hay citas para hoy. Créelas en Agenda.</td></tr>
             )}
             {(agenda.agendaHoy || []).map((c: any) => (
               <tr key={c.id}>

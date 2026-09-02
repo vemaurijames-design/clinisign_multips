@@ -39,6 +39,8 @@ public class Paciente {
     private String antecedentes;
     private String alergias;
     private String medicamentos;
+    @Column(name = "registrado_por")
+    private String registradoPor;
     @Column(name = "fecha_creacion")
     private Date fechaCreacion;
 

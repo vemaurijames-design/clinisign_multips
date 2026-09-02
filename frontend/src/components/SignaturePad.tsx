@@ -51,6 +51,7 @@ const SignaturePad = forwardRef<any, { label?: string }>(({ label = 'Firma' }, r
 
   useImperativeHandle(ref, () => ({
     getBase64: () => canvasRef.current!.toDataURL('image/png'),
+    toDataURL: () => canvasRef.current!.toDataURL('image/png'),
     clear,
   }));
 

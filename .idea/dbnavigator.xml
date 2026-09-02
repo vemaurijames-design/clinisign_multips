@@ -10,7 +10,12 @@
     <value-preview-pinned value="false" />
   </component>
   <component name="DBNavigator.Project.DatabaseAssistantManager">
-    <assistants />
+    <assistants>
+      <assistant-state connection-id="5815e02f-15c7-44be-8760-8731f2143e7a" assistant-type="PUBLIC" default-profile-name="" selected-chat-id="" availability="AVAILABLE" acknowledgement="NONE" selected="true">
+        <tools />
+        <mcp-servers />
+      </assistant-state>
+    </assistants>
     <selection-state>
       <model-selection />
     </selection-state>
@@ -43,7 +48,11 @@
     <filters />
   </component>
   <component name="DBNavigator.Project.Settings">
-    <states />
+    <states>
+      <state category="SECRET_STORAGE_MIGRATION">
+        <migrated value="true" />
+      </state>
+    </states>
     <connections>
       <connection source-id="" id="5815e02f-15c7-44be-8760-8731f2143e7a" active="true" signed="true">
         <database>
@@ -51,7 +60,7 @@
           <description value="" />
           <database-type value="POSTGRES" />
           <config-type value="BASIC" />
-          <database-version value="9999.0" />
+          <database-version value="17.4" />
           <driver-source value="BUNDLED" />
           <driver-library value="" />
           <driver value="" />
@@ -75,7 +84,7 @@
           <azure-token-tenant-id value="" />
           <azure-token-client-id value="" />
           <azure-token-client-certificate-file value="" />
-          <session-user value="" />
+          <session-user value="postgres" />
         </database>
         <properties>
           <auto-commit value="false" />

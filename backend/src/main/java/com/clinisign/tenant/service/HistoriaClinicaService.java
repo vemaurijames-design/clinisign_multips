@@ -1,5 +1,6 @@
 package com.clinisign.tenant.service;
 
+import com.clinisign.config.ActorContext;
 import com.clinisign.tenant.entity.HistoriaClinica;
 import com.clinisign.tenant.repository.HistoriaClinicaRepository;
 import com.clinisign.tenant.repository.PacienteRepository;
@@ -16,6 +17,7 @@ public class HistoriaClinicaService {
     private final HistoriaClinicaRepository repo;
     private final PacienteRepository pacRepo;
     private final SolicitudRepository solRepo;
+    private final AuditoriaService auditoria;
 
     public List<HistoriaClinica> listar() { return repo.findAll(); }
     public List<HistoriaClinica> porPaciente(Long pacienteId) { return repo.findByPacienteId(pacienteId); }
@@ -32,7 +34,12 @@ public class HistoriaClinicaService {
         if (solId != null && !solId.toString().isBlank()) {
             hc.setSolicitud(solRepo.findById(Long.valueOf(solId.toString())).orElseThrow());
         }
-        return repo.save(hc);
+        if (hc.getNombreProfesional() == null || hc.getNombreProfesional().isBlank()) {
+            hc.setNombreProfesional(ActorContext.nombre() != null ? ActorContext.nombre() : ActorContext.email());
+        }
+        hc = repo.save(hc);
+        auditoria.registrar("HISTORIA_CLINICA", "CREAR", hc.getId(), ActorContext.etiqueta());
+        return hc;
     }
 
     public HistoriaClinica actualizar(Long id, Map<String, Object> b) {
@@ -83,6 +90,9 @@ public class HistoriaClinicaService {
         set(b, "evolucion", hc::setEvolucion);
         set(b, "destinoPaciente", hc::setDestinoPaciente);
         set(b, "recomendaciones", hc::setRecomendaciones);
+        set(b, "detalleJson", hc::setDetalleJson);
+        set(b, "firmaPaciente", hc::setFirmaPaciente);
+        set(b, "firmaAcompanante", hc::setFirmaAcompanante);
         set(b, "firmaProfesional", hc::setFirmaProfesional);
         set(b, "nombreProfesional", hc::setNombreProfesional);
         set(b, "registroProfesional", hc::setRegistroProfesional);

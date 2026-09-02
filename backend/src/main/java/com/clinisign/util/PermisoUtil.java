@@ -9,10 +9,22 @@ import java.util.Set;
 @Component
 public class PermisoUtil {
 
+    public void requerirSuperadmin() {
+        if (!"SUPERADMIN".equals(rolActual())) {
+            throw new RuntimeException("Solo el SUPERADMIN puede crear o modificar usuarios. El cliente IPS solo consulta su staff.");
+        }
+    }
+
     public void requerirEdicion() {
         String rol = rolActual();
         if (!"SUPERADMIN".equals(rol) && !"ADMINIPS".equals(rol)) {
             throw new RuntimeException("No tiene permisos de edición. Rol actual: " + rol);
+        }
+    }
+
+    public void requerirEdicionHistoria() {
+        if (!"SUPERADMIN".equals(rolActual())) {
+            throw new RuntimeException("La historia clínica es un documento reservado (Ley 23 de 1981 y Res. 1995 de 1999). Solo el SUPERADMIN o quien él autorice puede corregirla. El resto solo visualiza.");
         }
     }
 

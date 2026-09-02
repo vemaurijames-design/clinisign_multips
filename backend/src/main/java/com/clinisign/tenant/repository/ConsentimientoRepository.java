@@ -8,4 +8,6 @@ import java.util.Optional;
 
 public interface ConsentimientoRepository extends JpaRepository<Consentimiento, Long> {
     List<Consentimiento> findByHistoriaClinicaId(Long id);
+    List<Consentimiento> findByDocumentoOrderByIdDesc(String documento);
+    long countByTipo(String tipo);
 }

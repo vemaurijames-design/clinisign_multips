@@ -19,7 +19,10 @@ public class Consentimiento {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "historia_clinica_id")
     private HistoriaClinica historiaClinica;
+    @Column(name = "plantilla_id")
+    private Long plantillaId;
     private String tipo = "CONSENTIMIENTO";
+    private Integer consecutivo;
     private String codigo = "HC-FM-04";
     private String version = "01";
     private Date fecha;
@@ -44,6 +47,8 @@ public class Consentimiento {
     private String nombreAuxiliar;
     @Column(name = "registro_auxiliar")
     private String registroAuxiliar;
+    @Column(name = "registrado_por")
+    private String registradoPor;
     private Boolean firmado = false;
     @Column(name = "correo_enviado")
     private Boolean correoEnviado = false;

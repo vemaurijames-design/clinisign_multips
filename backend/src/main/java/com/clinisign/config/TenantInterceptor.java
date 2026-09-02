@@ -32,6 +32,9 @@ public class TenantInterceptor implements HandlerInterceptor {
         }
 
         String ipsIdHeader = request.getHeader("X-Ips-Id");
+        if (ipsIdHeader == null || ipsIdHeader.isBlank() || "null".equals(ipsIdHeader)) {
+            ipsIdHeader = request.getParameter("ipsId");
+        }
         if (ipsIdHeader != null && !ipsIdHeader.isBlank() && !"null".equals(ipsIdHeader)) {
             return setFromHeader(ipsIdHeader, response);
         }

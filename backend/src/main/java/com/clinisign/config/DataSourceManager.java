@@ -60,6 +60,7 @@ public class DataSourceManager {
     public DataSource getDataSource(Long ipsId) {
         HikariDataSource existing = cache.get(ipsId);
         if (existing != null && !existing.isClosed()) {
+            ensureTenantExtras(existing);
             return existing;
         }
         synchronized (this) {
@@ -88,6 +89,7 @@ public class DataSourceManager {
         Ips ips = ipsRepository.findById(ipsId)
                 .orElseThrow(() -> new IllegalArgumentException("IPS no encontrada: " + ipsId));
         HikariDataSource ds = (HikariDataSource) createDataSourceForIps(ips);
+        ensureTenantExtras(ds);
         cache.put(ipsId, ds);
         try {
             RoutingDataSource routing = routingProvider.getIfAvailable();
@@ -99,6 +101,54 @@ public class DataSourceManager {
         }
         log.info("DataSource creado para IPS {} ({})", ipsId, ips.getBdNombre());
         return ds;
+    }
+
+    private void ensureTenantExtras(DataSource ds) {
+        String sql = """
+                CREATE TABLE IF NOT EXISTS auditoria (
+                    id BIGSERIAL PRIMARY KEY,
+                    modulo VARCHAR(80),
+                    accion VARCHAR(40),
+                    entidad_id BIGINT,
+                    usuario_email VARCHAR(200),
+                    usuario_nombre VARCHAR(200),
+                    rol VARCHAR(50),
+                    detalle TEXT,
+                    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                ALTER TABLE pacientes ADD COLUMN IF NOT EXISTS registrado_por VARCHAR(250);
+                ALTER TABLE citas ADD COLUMN IF NOT EXISTS creado_por VARCHAR(250);
+                ALTER TABLE consentimientos ADD COLUMN IF NOT EXISTS registrado_por VARCHAR(250);
+                ALTER TABLE solicitudes_servicio ADD COLUMN IF NOT EXISTS registrado_por VARCHAR(250);
+                ALTER TABLE consentimientos ADD COLUMN IF NOT EXISTS plantilla_id BIGINT;
+                ALTER TABLE consentimientos ADD COLUMN IF NOT EXISTS consecutivo INTEGER;
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS detalle_json TEXT;
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS firma_paciente TEXT;
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS firma_acompanante TEXT;
+                CREATE TABLE IF NOT EXISTS plantillas_documento (
+                    id BIGSERIAL PRIMARY KEY,
+                    tipo VARCHAR(40),
+                    nombre VARCHAR(200),
+                    codigo VARCHAR(40),
+                    version VARCHAR(20),
+                    procedimientos TEXT,
+                    beneficios TEXT,
+                    riesgos TEXT,
+                    alternativas TEXT,
+                    texto_legal TEXT,
+                    archivo_modelo_url VARCHAR(300),
+                    activa BOOLEAN DEFAULT TRUE,
+                    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                """;
+        try (var conn = ds.getConnection(); var st = conn.createStatement()) {
+            for (String part : sql.split(";")) {
+                String cmd = part.trim();
+                if (!cmd.isEmpty()) st.execute(cmd);
+            }
+        } catch (Exception e) {
+            log.warn("No se pudieron aplicar extras de auditoría: {}", e.getMessage());
+        }
     }
 
     public void registerExisting(Long ipsId, DataSource ds) {

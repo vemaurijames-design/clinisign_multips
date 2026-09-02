@@ -1,5 +1,6 @@
 package com.clinisign.tenant.service;
 
+import com.clinisign.config.ActorContext;
 import com.clinisign.tenant.entity.Paciente;
 import com.clinisign.tenant.repository.PacienteRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,20 +18,44 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class PacienteService {
     private final PacienteRepository repo;
+    private final AuditoriaService auditoria;
 
     public List<Paciente> listar() { return repo.findAll(); }
     public Paciente obtener(Long id) { return repo.findById(id).orElseThrow(); }
+
+    public List<Paciente> buscar(String q) {
+        if (q == null || q.isBlank()) return repo.findAll();
+        String n = q.trim().toLowerCase();
+        return repo.findByDocumento(q.trim())
+                .map(List::of)
+                .orElseGet(() -> repo.findAll().stream()
+                        .filter(p -> ((p.getNombre() == null ? "" : p.getNombre()) + " "
+                                + (p.getApellido() == null ? "" : p.getApellido()) + " "
+                                + (p.getDocumento() == null ? "" : p.getDocumento()) + " "
+                                + (p.getTelefono() == null ? "" : p.getTelefono()))
+                                .toLowerCase().contains(n))
+                        .toList());
+    }
+
     public Paciente crear(Map<String, Object> body) {
         Paciente p = new Paciente();
         mapear(p, body);
-        return repo.save(p);
+        p.setRegistradoPor(ActorContext.etiqueta());
+        p = repo.save(p);
+        auditoria.registrar("PACIENTES", "CREAR", p.getId(), p.getDocumento() + " " + p.getNombre());
+        return p;
     }
     public Paciente actualizar(Long id, Map<String, Object> body) {
         Paciente p = repo.findById(id).orElseThrow();
         mapear(p, body);
-        return repo.save(p);
+        p = repo.save(p);
+        auditoria.registrar("PACIENTES", "EDITAR", p.getId(), p.getDocumento());
+        return p;
     }
-    public void eliminar(Long id) { repo.deleteById(id); }
+    public void eliminar(Long id) {
+        auditoria.registrar("PACIENTES", "ELIMINAR", id, "paciente");
+        repo.deleteById(id);
+    }
 
     private void mapear(Paciente p, Map<String, Object> body) {
         if (body.containsKey("tipoDocumento")) p.setTipoDocumento(str(body.get("tipoDocumento")));

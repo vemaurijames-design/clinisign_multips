@@ -5,6 +5,8 @@ export default function Pacientes() {
   const [pacientes, setPacientes] = useState<any[]>([]);
   const [editing, setEditing] = useState<any>(null);
   const [showForm, setShowForm] = useState(false);
+  const [q, setQ] = useState('');
+  const [buscado, setBuscado] = useState('');
   const cargar = () => pacienteService.listar().then(r => setPacientes(r.data));
   useEffect(() => { cargar(); }, []);
 
@@ -38,12 +40,17 @@ export default function Pacientes() {
           </label>
         </div>
       </div>
+      <div className="toolbar">
+        <input placeholder="Buscar cédula o nombre" value={q} onChange={e => setQ(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') setBuscado(q); }} />
+        <button type="button" className="btn-primary" onClick={() => setBuscado(q)}>Buscar</button>
+      </div>
       {showForm && <PacienteForm paciente={editing} onSave={guardar} onCancel={() => setShowForm(false)} />}
       <div className="table-wrap">
         <table className="data-table">
           <thead><tr><th>Documento</th><th>Nombre</th><th>Apellido</th><th>Edad</th><th>Teléfono</th><th>EPS</th><th></th></tr></thead>
           <tbody>
-            {pacientes.map(p => (
+            {pacientes.filter(p => !buscado || `${p.nombre} ${p.apellido} ${p.documento} ${p.telefono}`.toLowerCase().includes(buscado.toLowerCase())).map(p => (
               <tr key={p.id}>
                 <td>{p.documento}</td><td>{p.nombre}</td><td>{p.apellido}</td>
                 <td>{p.edad}</td><td>{p.telefono}</td><td>{p.eps}</td>

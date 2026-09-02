@@ -20,6 +20,12 @@ public class PacienteController {
 
     @GetMapping
     public ResponseEntity<?> listar() { return ResponseEntity.ok(service.listar()); }
+
+    @GetMapping("/buscar")
+    public ResponseEntity<?> buscar(@RequestParam(value = "q", required = false) String q) {
+        return ResponseEntity.ok(service.buscar(q));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> obtener(@PathVariable Long id) { return ResponseEntity.ok(service.obtener(id)); }
     @PostMapping

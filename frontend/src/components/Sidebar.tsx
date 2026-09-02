@@ -13,6 +13,8 @@ const MENU = [
   { path: '/historias-clinicas', label: 'Historias clínicas', roles: ['SUPERADMIN','ADMINIPS','AUXILIAR'] },
   { path: '/consentimientos', label: 'Consentimientos', roles: ['SUPERADMIN','ADMINIPS','AUXILIAR'] },
   { path: '/reportes', label: 'Reportes', roles: ['SUPERADMIN','ADMINIPS','CALIDAD'] },
+  { path: '/config', label: 'Configuración IPS', roles: ['SUPERADMIN','ADMINIPS'] },
+  { path: '/auditoria', label: 'Bitácora', roles: ['SUPERADMIN','ADMINIPS','CALIDAD'] },
 ];
 
 export default function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -22,7 +24,10 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
 
   return (
     <aside className={`sidebar ${open ? 'open' : ''}`}>
-      <h1>CliniSign</h1>
+      <div className="sidebar-brand">
+        <img src="/logo-clinisign.png" alt="CliniSign" />
+        <h1>CliniSign</h1>
+      </div>
       <nav>
         {items.map(item => (
           <Link key={item.path} to={item.path} className={location.pathname === item.path ? 'active' : ''} onClick={onClose}>

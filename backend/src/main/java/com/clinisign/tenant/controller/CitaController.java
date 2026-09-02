@@ -35,6 +35,11 @@ public class CitaController {
         return ResponseEntity.ok(service.resumenAgenda());
     }
 
+    @GetMapping("/paciente/{pacienteId}")
+    public ResponseEntity<?> porPaciente(@PathVariable Long pacienteId) {
+        return ResponseEntity.ok(service.porPaciente(pacienteId));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> obtener(@PathVariable Long id) {
         return ResponseEntity.ok(service.obtener(id));

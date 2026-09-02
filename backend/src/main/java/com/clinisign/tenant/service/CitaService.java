@@ -29,6 +29,10 @@ public class CitaService {
         return repo.findAll();
     }
 
+    public List<Cita> porPaciente(Long pacienteId) {
+        return repo.findByPacienteIdOrderByFechaHoraDesc(pacienteId);
+    }
+
     public List<Cita> hoy() {
         Date[] rango = rangoDia(new Date());
         return repo.findByFechaHoraBetweenOrderByFechaHoraAsc(rango[0], rango[1]);
@@ -51,6 +55,9 @@ public class CitaService {
         if (c.getFechaHora() == null) throw new RuntimeException("La fecha y hora de la cita son obligatorias");
         completarTelefono(c);
         c.setWhatsappLink(armarLink(c));
+        if (c.getCreadoPor() == null || c.getCreadoPor().isBlank()) {
+            c.setCreadoPor(com.clinisign.config.ActorContext.etiqueta());
+        }
         return repo.save(c);
     }
 

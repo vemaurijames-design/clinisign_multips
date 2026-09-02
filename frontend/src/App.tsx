@@ -15,6 +15,8 @@ import Reportes from './pages/Reportes';
 import ListIps from './pages/ListIps';
 import CreateIps from './pages/CreateIps';
 import Agenda from './pages/Agenda';
+import ConfigCorreo from './pages/ConfigCorreo';
+import Auditoria from './pages/Auditoria';
 
 function AppRoutes() {
   const { token } = useAuth();
@@ -33,6 +35,8 @@ function AppRoutes() {
         <Route path="/reportes" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','CALIDAD']}><RequireIps><Reportes /></RequireIps></PrivateRoute>} />
         <Route path="/ips" element={<PrivateRoute roles={['SUPERADMIN']}><ListIps /></PrivateRoute>} />
         <Route path="/ips/create" element={<PrivateRoute roles={['SUPERADMIN']}><CreateIps /></PrivateRoute>} />
+        <Route path="/config" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS']}><RequireIps><ConfigCorreo /></RequireIps></PrivateRoute>} />
+        <Route path="/auditoria" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','CALIDAD']}><RequireIps><Auditoria /></RequireIps></PrivateRoute>} />
       </Routes>
     </Layout>
   );

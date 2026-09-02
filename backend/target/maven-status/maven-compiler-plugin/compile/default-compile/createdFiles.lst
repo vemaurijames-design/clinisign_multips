@@ -1,6 +1,7 @@
 com\clinisign\master\dto\LoginRequest.class
 com\clinisign\master\controller\IpsController.class
 com\clinisign\tenant\entity\Ambulancia.class
+com\clinisign\tenant\service\PlantillaDocumentoService.class
 com\clinisign\tenant\entity\SolicitudServicio.class
 com\clinisign\tenant\service\PacienteService.class
 com\clinisign\tenant\service\UsuarioService.class
@@ -10,6 +11,7 @@ com\clinisign\master\entity\Rol.class
 com\clinisign\tenant\entity\HistoriaClinica.class
 com\clinisign\tenant\service\ConsentimientoService.class
 com\clinisign\util\PermisoUtil.class
+com\clinisign\config\ActorContext.class
 com\clinisign\config\EmailService.class
 com\clinisign\master\service\IpsProvisioningService.class
 com\clinisign\tenant\repository\HistoriaClinicaRepository.class
@@ -19,6 +21,7 @@ com\clinisign\config\RoutingDataSource.class
 com\clinisign\tenant\repository\CitaRepository.class
 com\clinisign\tenant\entity\Reporte.class
 com\clinisign\tenant\controller\ReporteController.class
+com\clinisign\tenant\controller\AuditoriaController.class
 com\clinisign\tenant\repository\PacienteRepository.class
 com\clinisign\master\controller\AuthController.class
 com\clinisign\tenant\service\ConsentimientoPdfService.class
@@ -27,6 +30,7 @@ com\clinisign\config\TenantInterceptor.class
 com\clinisign\master\repository\MasterRolRepository.class
 com\clinisign\tenant\entity\Paciente.class
 com\clinisign\master\dto\AuthResponse.class
+com\clinisign\tenant\entity\Auditoria.class
 com\clinisign\tenant\service\SolicitudService.class
 com\clinisign\tenant\controller\SolicitudController.class
 com\clinisign\tenant\repository\ConsentimientoRepository.class
@@ -39,6 +43,7 @@ com\clinisign\tenant\controller\UsuarioController.class
 com\clinisign\config\JwtService.class
 com\clinisign\tenant\controller\PacienteController.class
 com\clinisign\tenant\entity\Cita.class
+com\clinisign\tenant\service\PdfPlantillaAnalyzer.class
 com\clinisign\tenant\entity\Usuario.class
 com\clinisign\config\SecurityConfig.class
 com\clinisign\config\WhatsAppService.class
@@ -47,17 +52,22 @@ com\clinisign\config\MasterDataSourceConfig.class
 com\clinisign\config\TenantContext.class
 com\clinisign\tenant\repository\TenantRolRepository.class
 com\clinisign\tenant\repository\UsuarioRepository.class
+com\clinisign\config\TenantSchemaFixer.class
 com\clinisign\master\repository\IpsRepository.class
 com\clinisign\master\entity\IpsConfig.class
+com\clinisign\tenant\entity\PlantillaDocumento.class
 com\clinisign\tenant\repository\SolicitudRepository.class
 com\clinisign\tenant\service\HistoriaClinicaService.class
 com\clinisign\config\ApiExceptionHandler.class
+com\clinisign\tenant\service\HistoriaClinicaPdfService.class
 com\clinisign\config\WebConfig.class
 com\clinisign\master\dto\IpsPublicDTO.class
 com\clinisign\tenant\controller\HistoriaClinicaController.class
+com\clinisign\tenant\service\AuditoriaService.class
 com\clinisign\master\service\SuperadminStaffService.class
 com\clinisign\master\entity\Ips.class
 com\clinisign\master\dto\IpsDTO.class
+com\clinisign\tenant\repository\AuditoriaRepository.class
 com\clinisign\master\repository\IpsConfigRepository.class
 com\clinisign\master\repository\SuperadminUserRepository.class
 com\clinisign\ClinisignApplication.class
@@ -66,7 +76,9 @@ com\clinisign\master\entity\SuperadminUser.class
 com\clinisign\tenant\controller\ConsentimientoController.class
 com\clinisign\tenant\repository\AmbulanciaRepository.class
 com\clinisign\config\DataSourceManager.class
+com\clinisign\tenant\repository\PlantillaDocumentoRepository.class
 com\clinisign\master\controller\SuperadminController.class
 com\clinisign\config\DataInitializer.class
+com\clinisign\tenant\controller\PlantillaDocumentoController.class
 com\clinisign\tenant\entity\Rol.class
 com\clinisign\config\JwtAuthFilter.class
