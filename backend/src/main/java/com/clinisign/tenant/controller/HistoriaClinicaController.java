@@ -27,10 +27,10 @@ public class HistoriaClinicaController {
     public ResponseEntity<?> obtener(@PathVariable Long id) { return ResponseEntity.ok(service.obtener(id)); }
 
     @GetMapping("/{id}/pdf")
-    public ResponseEntity<byte[]> pdf(@PathVariable Long id) {
+    public ResponseEntity<byte[]> descargarPdf(@PathVariable Long id) {
         byte[] pdf = pdfService.generar(id);
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=HC-FM-05-" + id + ".pdf")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=hc_" + id + ".pdf")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdf);
     }
@@ -47,4 +47,5 @@ public class HistoriaClinicaController {
         service.eliminar(id);
         return ResponseEntity.ok().build();
     }
+
 }

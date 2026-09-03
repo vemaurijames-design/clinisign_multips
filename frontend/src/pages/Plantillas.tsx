@@ -1,104 +1,113 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { plantillaService } from '../services/rest';
 import { useAuth } from '../context/AuthContext';
 
+const SLOTS = [
+  { tipo: 'CONSENTIMIENTO', titulo: 'Consentimiento informado', codigo: 'HC-FM-04', ruta: '/consentimientos?tipo=CONSENTIMIENTO' },
+  { tipo: 'DESISTIMIENTO', titulo: 'Desistimiento informado', codigo: 'HC-FM-06', ruta: '/consentimientos?tipo=DESISTIMIENTO' },
+  { tipo: 'HISTORIA_CLINICA', titulo: 'Historia clínica', codigo: 'HC-FM-05', ruta: '/historias-clinicas' },
+];
+
 export default function Plantillas() {
+  const { ipsNombre, rol } = useAuth();
   const [items, setItems] = useState<any[]>([]);
-  const [form, setForm] = useState<any>({});
   const [msg, setMsg] = useState('');
-  const [q, setQ] = useState('');
-  const [buscado, setBuscado] = useState('');
-  const [analizando, setAnalizando] = useState(false);
-  const [tipoPdf, setTipoPdf] = useState('');
-  const { rol } = useAuth();
-  const puedeEditar = rol === 'SUPERADMIN';
+  const [edit, setEdit] = useState<any>(null);
+  const puede = rol === 'SUPERADMIN';
 
   const cargar = () => plantillaService.listar().then(r => setItems(r.data || [])).catch(() => setItems([]));
-  useEffect(() => { cargar(); }, []);
+  useEffect(() => { cargar(); }, [ipsNombre]);
 
-  const analizarPdf = async (file?: File) => {
+  const activa = (tipo: string) =>
+    items.filter(p => p.tipo === tipo && p.activa !== false).sort((a, b) => (b.id || 0) - (a.id || 0))[0]
+    || items.filter(p => p.tipo === tipo).sort((a, b) => (b.id || 0) - (a.id || 0))[0];
+
+  const subir = async (tipo: string, file?: File) => {
     if (!file) return;
-    setAnalizando(true);
     try {
-      const { data } = await plantillaService.desdePdf(file, tipoPdf || undefined);
-      setForm(data);
-      setMsg('PDF leído. Revise los textos, ajuste y guarde. El modelo queda para visualizar.');
+      const { data } = await plantillaService.desdePdf(file, tipo);
+      setMsg('Plantilla ' + tipo + ' guardada solo para ' + ipsNombre + '.');
+      setEdit(data);
       cargar();
     } catch (e: any) {
-      setMsg(e.response?.data?.message || 'No se pudo analizar el PDF');
-    } finally {
-      setAnalizando(false);
+      setMsg(e.response?.data?.message || 'No se pudo leer el PDF');
     }
   };
 
   const guardar = async () => {
-    const saved = await plantillaService.guardar(form);
-    setForm(saved.data);
-    setMsg('Plantilla guardada en esta IPS.');
+    const saved = await plantillaService.guardar({ ...edit, activa: true });
+    setEdit(saved.data);
+    setMsg('Activa en esta IPS. El auxiliar ya la verá al llenar el formulario.');
     cargar();
   };
 
-  const visibles = items.filter(p =>
-    !buscado || `${p.nombre} ${p.tipo} ${p.codigo}`.toLowerCase().includes(buscado.toLowerCase())
-  );
+  if (!ipsNombre) {
+    return <div className="card">Seleccione la IPS en la barra superior. Las plantillas viven en la BD de esa IPS.</div>;
+  }
 
   return (
     <div>
-      <h2>Plantillas de esta IPS</h2>
-      <p className="hint">Adjunte el PDF oficial. CliniSign extrae beneficios, riesgos y texto legal. El PDF del paciente se genera después con logo y datos reales.</p>
-      {msg && <div className="card">{msg}</div>}
-      {!puedeEditar && <div className="card">Solo el SUPERADMIN carga plantillas de cada IPS (evita formatos cruzados). Usted puede verlas y usarlas en Consentimientos.</div>}
-      {puedeEditar && <div className="card">
-        <h3>1. Adjuntar PDF y analizar</h3>
-        <div className="toolbar">
-          <select value={tipoPdf} onChange={e => setTipoPdf(e.target.value)}>
-            <option value="">Detectar tipo</option>
-            <option value="CONSENTIMIENTO">Consentimiento</option>
-            <option value="DESISTIMIENTO">Desistimiento</option>
-          </select>
-          <input type="file" accept="application/pdf" onChange={e => analizarPdf(e.target.files?.[0])} />
-          {analizando && <span className="hint">Analizando PDF…</span>}
+      <div className="page-head">
+        <div>
+          <h2>Plantillas de {ipsNombre}</h2>
+          <p className="hint">
+            Estas tres plantillas están en la base de datos de <strong>{ipsNombre}</strong>.
+            Otra IPS no las ve. El auxiliar carga solo la activa de esta institución.
+          </p>
         </div>
-      </div>}
-      {(form.nombre || form.id) && (
+      </div>
+      {msg && <div className="card">{msg}</div>}
+
+      <div className="grid-stats">
+        {SLOTS.map(slot => {
+          const p = activa(slot.tipo);
+          return (
+            <div className="card" key={slot.tipo}>
+              <h3>{slot.titulo}</h3>
+              <p className="hint">Código {slot.codigo} · {slot.tipo}</p>
+              {p ? (
+                <>
+                  <p><strong>{p.nombre || slot.titulo}</strong></p>
+                  <p className="hint">{p.codigo} v{p.version || '01'} · {p.activa === false ? 'inactiva' : 'ACTIVA en esta IPS'}</p>
+                  <div className="toolbar">
+                    <Link to={slot.ruta}><button className="btn-primary">Llenar formulario</button></Link>
+                    {puede && <button onClick={() => setEdit(p)}>Editar textos</button>}
+                  </div>
+                </>
+              ) : (
+                <p className="hint">Aún no hay plantilla de este tipo en {ipsNombre}.</p>
+              )}
+              {puede && (
+                <div style={{ marginTop: 10 }}>
+                  <label className="hint">PDF oficial de {slot.titulo}</label>
+                  <input type="file" accept="application/pdf" onChange={e => subir(slot.tipo, e.target.files?.[0])} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {edit && puede && (
         <div className="card">
-          <h3>2. Textos extraídos</h3>
+          <h3>Textos de {edit.tipo} — solo {ipsNombre}</h3>
           <div className="form-grid">
-            <select value={form.tipo || 'CONSENTIMIENTO'} onChange={e => setForm({ ...form, tipo: e.target.value })}>
-              <option value="CONSENTIMIENTO">Consentimiento</option>
-              <option value="DESISTIMIENTO">Desistimiento</option>
-            </select>
-            <input placeholder="Nombre" value={form.nombre || ''} onChange={e => setForm({ ...form, nombre: e.target.value })} />
-            <input placeholder="Código" value={form.codigo || ''} onChange={e => setForm({ ...form, codigo: e.target.value })} />
-            <input placeholder="Versión" value={form.version || ''} onChange={e => setForm({ ...form, version: e.target.value })} />
+            <input value={edit.nombre || ''} onChange={e => setEdit({ ...edit, nombre: e.target.value })} placeholder="Nombre" />
+            <input value={edit.codigo || ''} onChange={e => setEdit({ ...edit, codigo: e.target.value })} placeholder="Código" />
+            <input value={edit.version || ''} onChange={e => setEdit({ ...edit, version: e.target.value })} placeholder="Versión" />
           </div>
-          <textarea placeholder="Procedimientos" value={form.procedimientos || ''} onChange={e => setForm({ ...form, procedimientos: e.target.value })} />
-          <textarea placeholder="Beneficios" value={form.beneficios || ''} onChange={e => setForm({ ...form, beneficios: e.target.value })} />
-          <textarea placeholder="Riesgos" value={form.riesgos || ''} onChange={e => setForm({ ...form, riesgos: e.target.value })} />
-          <textarea placeholder="Alternativas" value={form.alternativas || ''} onChange={e => setForm({ ...form, alternativas: e.target.value })} />
-          <textarea placeholder="Texto legal" value={form.textoLegal || ''} onChange={e => setForm({ ...form, textoLegal: e.target.value })} />
-          <button className="btn-primary" onClick={guardar}>Guardar plantilla</button>
-          {form.archivoModeloUrl && <iframe className="pdf-frame" title="Modelo" src={form.archivoModeloUrl} style={{ marginTop: 12 }} />}
+          <textarea value={edit.procedimientos || ''} onChange={e => setEdit({ ...edit, procedimientos: e.target.value })} placeholder="Procedimientos" />
+          <textarea value={edit.beneficios || ''} onChange={e => setEdit({ ...edit, beneficios: e.target.value })} placeholder="Beneficios" />
+          <textarea value={edit.riesgos || ''} onChange={e => setEdit({ ...edit, riesgos: e.target.value })} placeholder="Riesgos" />
+          <textarea value={edit.alternativas || ''} onChange={e => setEdit({ ...edit, alternativas: e.target.value })} placeholder="Alternativas" />
+          <textarea value={edit.textoLegal || ''} onChange={e => setEdit({ ...edit, textoLegal: e.target.value })} placeholder="Texto legal que leerá el paciente" />
+          <div className="toolbar">
+            <button className="btn-primary" onClick={guardar}>Guardar y dejar activa</button>
+            <button onClick={() => setEdit(null)}>Cerrar</button>
+          </div>
         </div>
       )}
-      <div className="toolbar">
-        <input placeholder="Buscar plantilla por nombre o código" value={q} onChange={e => setQ(e.target.value)} />
-        <button type="button" className="btn-primary" onClick={() => setBuscado(q)}>Buscar</button>
-      </div>
-      <div className="table-wrap">
-        <table className="data-table">
-          <thead><tr><th>Tipo</th><th>Nombre</th><th>Código</th><th>PDF</th><th></th></tr></thead>
-          <tbody>
-            {visibles.map(p => (
-              <tr key={p.id}>
-                <td>{p.tipo}</td><td>{p.nombre}</td><td>{p.codigo}</td>
-                <td>{p.archivoModeloUrl ? <a href={p.archivoModeloUrl} target="_blank" rel="noreferrer">Ver PDF</a> : '—'}</td>
-                <td><button onClick={() => setForm(p)}>Ver / editar</button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     </div>
   );
 }

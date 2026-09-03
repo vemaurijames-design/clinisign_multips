@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { consentimientoService, pacienteService } from '../services/rest';
+import { useSearchParams } from 'react-router-dom';
+import { consentimientoService, pacienteService, plantillaService } from '../services/rest';
 import SignaturePad from '../components/SignaturePad';
 import BuscadorPaciente from '../components/BuscadorPaciente';
 import { useAuth } from '../context/AuthContext';
@@ -18,6 +19,7 @@ const DES = [
 ];
 
 export default function Consentimientos() {
+  const [params] = useSearchParams();
   const [items, setItems] = useState<any[]>([]);
   const [show, setShow] = useState(false);
   const [tipoNuevo, setTipoNuevo] = useState<'CONSENTIMIENTO' | 'DESISTIMIENTO'>('CONSENTIMIENTO');
@@ -25,12 +27,19 @@ export default function Consentimientos() {
   const [filtro, setFiltro] = useState('');
   const cargar = () => consentimientoService.listar().then(r => setItems(r.data || [])).catch(() => setItems([]));
   useEffect(() => { cargar(); }, []);
+  useEffect(() => {
+    const t = (params.get('tipo') || '').toUpperCase();
+    if (t === 'CONSENTIMIENTO' || t === 'DESISTIMIENTO') {
+      setTipoNuevo(t);
+      setShow(true);
+    }
+  }, [params]);
   return (
     <div>
       <div className="page-head">
         <div>
           <h2>Consentimiento y desistimiento</h2>
-          <p className="hint">Formatos SIAN HC-FM-04 y HC-FM-06. Busque el paciente, lea, firme, genere PDF y envíe a la clínica. El consecutivo es único por IPS y tipo.</p>
+          <p className="hint">Se carga la plantilla ACTIVA de esta IPS. El auxiliar solo llena paciente y firma; el texto legal sale de esa plantilla. Luego se genera el PDF.</p>
         </div>
         <div className="toolbar">
           <button className="btn-primary" onClick={() => { setTipoNuevo('CONSENTIMIENTO'); setShow(true); }}>Consentimiento HC-FM-04</button>
@@ -62,8 +71,14 @@ export default function Consentimientos() {
                 <td>
                   <button onClick={() => setPdfUrl(consentimientoService.pdfUrl(c.id))}>Ver PDF</button>
                   <button onClick={async () => {
-                    const correo = prompt('Correo de la clínica') || '';
-                    if (correo) { await consentimientoService.enviar(c.id, correo); cargar(); }
+                    const correo = prompt('Correo de la clínica (vacío = correo institucional de la IPS)') || '';
+                    try {
+                      await consentimientoService.enviar(c.id, correo);
+                      alert('Correo enviado.');
+                      cargar();
+                    } catch (e: any) {
+                      alert(e.response?.data?.message || 'No se envió. Revise SMTP en Configuración IPS.');
+                    }
                   }}>Enviar</button>
                 </td>
               </tr>
@@ -93,7 +108,11 @@ function DocumentoSian({ tipo, onDone, onCancel }: { tipo: string; onDone: () =>
   const firmaRef = useRef<any>(null);
   const huellaRef = useRef<any>(null);
   const lista = tipo === 'DESISTIMIENTO' ? DES : CONS;
-  const codigo = tipo === 'DESISTIMIENTO' ? 'HC-FM-06' : 'HC-FM-04';
+  const [plantilla, setPlantilla] = useState<any>(null);
+  const codigo = plantilla?.codigo || (tipo === 'DESISTIMIENTO' ? 'HC-FM-06' : 'HC-FM-04');
+  useEffect(() => {
+    plantillaService.porTipo(tipo).then(r => setPlantilla(r.data)).catch(() => setPlantilla(null));
+  }, [tipo]);
 
   const crearPac = async () => {
     if (!alta.nombre || !alta.documento) return alert('Nombre y documento obligatorios');
@@ -111,6 +130,11 @@ function DocumentoSian({ tipo, onDone, onCancel }: { tipo: string; onDone: () =>
     await consentimientoService.crear({
       tipo,
       codigo,
+      plantillaId: plantilla?.id,
+      beneficios: plantilla?.beneficios,
+      riesgos: plantilla?.riesgos,
+      alternativas: plantilla?.alternativas,
+      observaciones: plantilla?.textoLegal,
       documento: pac.documento,
       telefono: pac.telefono,
       calidad: calidad + (responsableDe ? ' de ' + responsableDe : ''),
@@ -132,7 +156,8 @@ function DocumentoSian({ tipo, onDone, onCancel }: { tipo: string; onDone: () =>
         <div style={{ padding: 8, fontWeight: 700, color: '#0b63c8' }}>{ipsNombre || 'SIAN SALUD'}</div>
         <h2>{tipo === 'DESISTIMIENTO' ? 'DESISTIMIENTO INFORMADO' : 'CONSENTIMIENTO INFORMADO'}</h2>
         <div className="doc-sian-meta">
-          CÓDIGO: {codigo}<br />VERSIÓN: 01<br />FECHA: DICIEMBRE 2024
+          CÓDIGO: {codigo}<br />VERSIÓN: {plantilla?.version || '01'}<br />
+          {plantilla ? `Plantilla IPS: ${plantilla.nombre}` : 'Texto SIAN por defecto'}
         </div>
       </div>
 
@@ -175,7 +200,7 @@ function DocumentoSian({ tipo, onDone, onCancel }: { tipo: string; onDone: () =>
 
       {tipo === 'CONSENTIMIENTO' ? (
         <>
-          <p className="legal">Con el presente documento doy fe y declaro: que he sido informado por el Auxiliar de Enfermería/APH de {ipsNombre || 'Sian Salud SAS'} sobre los procedimientos requeridos para mi atención:</p>
+          <p className="legal">{plantilla?.textoLegal || `Con el presente documento doy fe y declaro: que he sido informado por el Auxiliar de Enfermería/APH de ${ipsNombre || 'Sian Salud SAS'} sobre los procedimientos requeridos para mi atención:`}</p>
           <div className="checks">
             {lista.map(p => (
               <label key={p}><input type="checkbox" checked={procs.includes(p)} onChange={e => setProcs(e.target.checked ? [...procs, p] : procs.filter(x => x !== p))} /> {p}</label>
@@ -184,7 +209,7 @@ function DocumentoSian({ tipo, onDone, onCancel }: { tipo: string; onDone: () =>
           <label>Otro<input className="linea" value={otro} onChange={e => setOtro(e.target.value)} /></label>
           <div className="bloque">
             <h3>Beneficios</h3>
-            <p className="legal">El traslado se hace en ambulancia de transporte asistencial de baja complejidad, voy a estar acompañado por personal Auxiliar de enfermería/APH y un conductor debidamente entrenado. El vehículo dispone del material y medicación necesaria para atender al paciente y restablecer las funciones vitales en situaciones críticas (ritmo cardíaco, presión arterial, respiración, inconsciencia o traumatismos). Puedo tener un acompañante mayor de edad. Disminución de riesgos de lesiones y de tiempos de llegada.</p>
+            <p className="legal">{plantilla?.beneficios || 'El traslado se hace en ambulancia de transporte asistencial de baja complejidad, voy a estar acompañado por personal Auxiliar de enfermería/APH y un conductor debidamente entrenado. El vehículo dispone del material y medicación necesaria para atender al paciente y restablecer las funciones vitales en situaciones críticas. Puedo tener un acompañante mayor de edad. Disminución de riesgos de lesiones y de tiempos de llegada.'}</p>
           </div>
           <div className="bloque">
             <h3>Alternativas</h3>

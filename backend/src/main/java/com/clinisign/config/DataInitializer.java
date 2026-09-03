@@ -1,7 +1,11 @@
 package com.clinisign.config;
 
+import com.clinisign.master.entity.Ips;
+import com.clinisign.master.entity.IpsConfig;
 import com.clinisign.master.entity.Rol;
 import com.clinisign.master.entity.SuperadminUser;
+import com.clinisign.master.repository.IpsConfigRepository;
+import com.clinisign.master.repository.IpsRepository;
 import com.clinisign.master.repository.MasterRolRepository;
 import com.clinisign.master.repository.SuperadminUserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +22,8 @@ public class DataInitializer implements CommandLineRunner {
     private final SuperadminUserRepository superadminRepo;
     private final MasterRolRepository rolRepository;
     private final PasswordEncoder passwordEncoder;
+    private final IpsRepository ipsRepository;
+    private final IpsConfigRepository ipsConfigRepository;
 
     @Override
     public void run(String... args) {
@@ -41,6 +47,25 @@ public class DataInitializer implements CommandLineRunner {
             log.info("Superadmin creado: {} / {}", email, "admin123456");
         } else {
             log.info("Superadmin ya existe: {}", email);
+        }
+
+        for (Ips ips : ipsRepository.findAll()) {
+            IpsConfig cfg = ipsConfigRepository.findByIpsId(ips.getId()).orElseGet(() -> {
+                IpsConfig n = new IpsConfig();
+                n.setIpsId(ips.getId());
+                return n;
+            });
+            if (cfg.getSmtpPassword() == null || cfg.getSmtpPassword().isBlank()) {
+                cfg.setSmtpHost("smtp-mail.outlook.com");
+                cfg.setSmtpPort(587);
+                cfg.setSmtpAuth(true);
+                cfg.setSmtpStarttls(true);
+                cfg.setSmtpUsername("siansalud2024@hotmail.com");
+                cfg.setSmtpPassword("owyapxlycgeecqet");
+                cfg.setCorreoFrom("siansalud2024@hotmail.com");
+                ipsConfigRepository.save(cfg);
+                log.info("SMTP Hotmail configurado para IPS {}", ips.getNombre());
+            }
         }
     }
 }

@@ -43,7 +43,7 @@ public class PermisoUtil {
     }
 
     public boolean puedeOperarSolicitudes() {
-        return Set.of("SUPERADMIN", "ADMINIPS", "RADIOPERADOR").contains(rolActual());
+        return Set.of("SUPERADMIN", "ADMINIPS", "RADIOPERADOR", "AUXILIAR").contains(rolActual());
     }
 
     public void requerirOperacionSolicitud() {

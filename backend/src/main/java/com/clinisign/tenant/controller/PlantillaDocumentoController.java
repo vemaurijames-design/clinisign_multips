@@ -26,6 +26,11 @@ public class PlantillaDocumentoController {
         return ResponseEntity.ok(service.activas());
     }
 
+    @GetMapping("/tipo/{tipo}")
+    public ResponseEntity<?> porTipo(@PathVariable String tipo) {
+        return ResponseEntity.ok(service.activaPorTipo(tipo));
+    }
+
     @PostMapping
     public ResponseEntity<?> guardar(@RequestBody Map<String, Object> body) {
         permiso.requerirRol("SUPERADMIN");

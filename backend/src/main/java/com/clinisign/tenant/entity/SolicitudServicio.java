@@ -33,6 +33,10 @@ public class SolicitudServicio {
     @JoinColumn(name = "ambulancia_id")
     private Ambulancia ambulancia;
     private String radioperador;
+    @Column(name = "asignado_a")
+    private String asignadoA;
+    @Column(name = "registrado_por")
+    private String registradoPor;
     @Column(name = "hora_solicitud")
     private Date horaSolicitud;
     @Column(name = "hora_asignacion")

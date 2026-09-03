@@ -39,6 +39,14 @@ public class Paciente {
     private String antecedentes;
     private String alergias;
     private String medicamentos;
+    private String ocupacion;
+    @Column(name = "estado_civil")
+    private String estadoCivil;
+    private String municipio;
+    private String aseguramiento;
+    private String parentesco;
+    @Column(name = "tipo_traslado")
+    private String tipoTraslado;
     @Column(name = "registrado_por")
     private String registradoPor;
     @Column(name = "fecha_creacion")

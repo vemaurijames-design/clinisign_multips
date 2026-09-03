@@ -68,6 +68,12 @@ public class PacienteService {
         if (body.containsKey("telefono")) p.setTelefono(str(body.get("telefono")));
         if (body.containsKey("ciudad")) p.setCiudad(str(body.get("ciudad")));
         if (body.containsKey("eps")) p.setEps(str(body.get("eps")));
+        if (body.containsKey("ocupacion")) p.setOcupacion(str(body.get("ocupacion")));
+        if (body.containsKey("estadoCivil")) p.setEstadoCivil(str(body.get("estadoCivil")));
+        if (body.containsKey("municipio")) p.setMunicipio(str(body.get("municipio")));
+        if (body.containsKey("aseguramiento")) p.setAseguramiento(str(body.get("aseguramiento")));
+        if (body.containsKey("parentesco")) p.setParentesco(str(body.get("parentesco")));
+        if (body.containsKey("tipoTraslado")) p.setTipoTraslado(str(body.get("tipoTraslado")));
         if (body.containsKey("rh")) p.setRh(str(body.get("rh")));
         if (body.containsKey("contactoNombre")) p.setContactoNombre(str(body.get("contactoNombre")));
         if (body.containsKey("contactoTelefono")) p.setContactoTelefono(str(body.get("contactoTelefono")));

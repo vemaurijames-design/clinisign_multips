@@ -9,15 +9,16 @@ function authQs() {
 export const ipsService = {
   listar: () => api.get('/ips/list'),
   listarAdmin: () => api.get('/ips/admin'),
-  obtener: (id: number) => api.get(`/ips/${id}`),
+  obtener: (id: number) => api.get('/mi-ips').catch(() => api.get(`/ips/${id}`)),
   crear: (dto: any) => api.post('/ips/create', dto),
-  actualizar: (id: number, dto: any) => api.put(`/ips/${id}`, dto),
-  config: (id: number) => api.get(`/ips/${id}/config`),
-  guardarConfig: (id: number, dto: any) => api.put(`/ips/${id}/config`, dto),
+  actualizar: (id: number, dto: any) => api.put('/mi-ips', dto).catch(() => api.put(`/ips/${id}`, dto)),
+  config: (id: number) => api.get('/mi-ips/config').catch(() => api.get(`/ips/${id}/config`)),
+  guardarConfig: (id: number, dto: any) => api.put('/mi-ips/config', dto).catch(() => api.put(`/ips/${id}/config`, dto)),
+  probarCorreo: (to?: string) => api.post('/mi-ips/probar-correo', { to }),
   subirLogo: (id: number, file: File) => {
     const fd = new FormData();
     fd.append('file', file);
-    return api.post(`/ips/${id}/logo`, fd);
+    return api.post('/mi-ips/logo', fd).catch(() => api.post(`/ips/${id}/logo`, fd));
   },
 };
 
@@ -84,6 +85,7 @@ export const historiaClinicaService = {
 export const plantillaService = {
   listar: () => api.get('/plantillas'),
   activas: () => api.get('/plantillas/activas'),
+  porTipo: (tipo: string) => api.get(`/plantillas/tipo/${encodeURIComponent(tipo)}`),
   guardar: (data: any) => api.post('/plantillas', data),
   adjuntar: (id: number, file: File) => {
     const fd = new FormData();

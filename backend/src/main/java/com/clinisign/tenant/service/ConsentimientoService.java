@@ -3,6 +3,8 @@ package com.clinisign.tenant.service;
 import com.clinisign.config.ActorContext;
 import com.clinisign.config.EmailService;
 import com.clinisign.config.TenantContext;
+import com.clinisign.master.entity.Ips;
+import com.clinisign.master.repository.IpsRepository;
 import com.clinisign.tenant.entity.Consentimiento;
 import com.clinisign.tenant.entity.HistoriaClinica;
 import com.clinisign.tenant.entity.PlantillaDocumento;
@@ -24,6 +26,8 @@ public class ConsentimientoService {
     private final ConsentimientoRepository repo;
     private final HistoriaClinicaRepository hcRepo;
     private final EmailService emailService;
+    private final ConsentimientoPdfService pdfService;
+    private final IpsRepository ipsRepository;
     private final AuditoriaService auditoria;
     private final PlantillaDocumentoRepository plantillaRepo;
 
@@ -128,13 +132,24 @@ public class ConsentimientoService {
     public Consentimiento enviarCorreo(Long id, String destino) {
         Consentimiento c = repo.findById(id).orElseThrow(() -> new RuntimeException("Documento no encontrado"));
         if (!notBlank(destino)) destino = c.getCorreoDestino();
-        if (!notBlank(destino)) {
-            throw new RuntimeException("Indique el correo destino (IPS o paciente).");
+        if (!notBlank(destino) && TenantContext.getIpsId() != null) {
+            Ips ips = ipsRepository.findById(TenantContext.getIpsId()).orElse(null);
+            if (ips != null && notBlank(ips.getCorreo())) destino = ips.getCorreo();
         }
-        String html = "<p>Se adjunta el " + c.getTipo() + " " + c.getCodigo() + "-" + c.getConsecutivo()
-                + " del documento " + c.getDocumento() + ".</p>";
-        emailService.enviarConsentimiento(TenantContext.getIpsId(), destino,
-                c.getTipo() + " " + c.getCodigo() + "-" + c.getConsecutivo(), html);
+        if (!notBlank(destino)) {
+            throw new RuntimeException("Indique el correo o configure el correo institucional de la IPS.");
+        }
+        String html = "<p>Se adjunta el documento clínico de CliniSign.</p>"
+                + "<p><b>Tipo:</b> " + c.getTipo() + "<br/>"
+                + "<b>Código:</b> " + c.getCodigo() + "-" + c.getConsecutivo() + "<br/>"
+                + "<b>Documento del paciente:</b> " + c.getDocumento() + "<br/>"
+                + "<b>Calidad:</b> " + c.getCalidad() + "<br/>"
+                + "<b>Teléfono:</b> " + c.getTelefono() + "</p>"
+                + "<p>Este correo es de respaldo institucional. Historia clínica reservada (Ley 23 de 1981).</p>";
+        byte[] pdf = pdfService.generarPdf(id);
+        emailService.enviarPdf(TenantContext.getIpsId(), destino,
+                c.getTipo() + " " + c.getCodigo() + "-" + c.getConsecutivo() + " doc " + c.getDocumento(),
+                html, pdf, c.getCodigo() + "-" + c.getConsecutivo() + ".pdf");
         c.setCorreoEnviado(true);
         c.setCorreoDestino(destino);
         c.setFechaEnvio(new Date());

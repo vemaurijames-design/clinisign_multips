@@ -39,6 +39,15 @@ public class PlantillaDocumentoService {
         return repo.findByActivaTrue();
     }
 
+    public PlantillaDocumento activaPorTipo(String tipo) {
+        asegurarTabla();
+        asegurarDefaults();
+        if (tipo == null || tipo.isBlank()) tipo = "CONSENTIMIENTO";
+        PlantillaDocumento p = repo.findFirstByTipoAndActivaTrueOrderByIdDesc(tipo.trim().toUpperCase());
+        if (p == null) throw new RuntimeException("Esta IPS no tiene plantilla activa de " + tipo);
+        return p;
+    }
+
     public PlantillaDocumento obtener(Long id) {
         return repo.findById(id).orElseThrow(() -> new RuntimeException("Plantilla no encontrada"));
     }
@@ -57,6 +66,14 @@ public class PlantillaDocumentoService {
         if (body.get("alternativas") != null) p.setAlternativas(body.get("alternativas").toString());
         if (body.get("textoLegal") != null) p.setTextoLegal(body.get("textoLegal").toString());
         if (body.get("activa") != null) p.setActiva(Boolean.valueOf(body.get("activa").toString()));
+        if (Boolean.TRUE.equals(p.getActiva()) && p.getTipo() != null) {
+            for (PlantillaDocumento otra : repo.findByTipoAndActivaTrue(p.getTipo())) {
+                if (p.getId() == null || !otra.getId().equals(p.getId())) {
+                    otra.setActiva(false);
+                    repo.save(otra);
+                }
+            }
+        }
         p = repo.save(p);
         auditoria.registrar("PLANTILLAS", "GUARDAR", p.getId(), p.getTipo() + " " + p.getNombre());
         return p;
@@ -108,7 +125,17 @@ public class PlantillaDocumentoService {
     }
 
     private void asegurarDefaults() {
-        if (repo.count() > 0) return;
+        if (repo.findByTipoAndActivaTrue("HISTORIA_CLINICA").isEmpty()) {
+            PlantillaDocumento h = new PlantillaDocumento();
+            h.setTipo("HISTORIA_CLINICA");
+            h.setNombre("Historia clínica prehospitalaria");
+            h.setCodigo("HC-FM-05");
+            h.setVersion("01");
+            h.setTextoLegal("Formato HC-FM-05. Documento reservado Ley 23 de 1981 y Res. 1995 de 1999.");
+            h.setActiva(true);
+            repo.save(h);
+        }
+        if (repo.count() > 1) return;
         PlantillaDocumento c = new PlantillaDocumento();
         c.setTipo("CONSENTIMIENTO");
         c.setNombre("Consentimiento informado de traslado");

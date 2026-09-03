@@ -1,6 +1,7 @@
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\master\repository\IpsConfigRepository.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\master\service\IpsProvisioningService.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\repository\CitaRepository.java
+D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\repository\NotificacionRepository.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\entity\Ambulancia.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\controller\UsuarioController.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\config\SecurityConfig.java
@@ -9,6 +10,7 @@ D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\service\ReporteService.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\controller\CitaController.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\service\HistoriaClinicaService.java
+D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\controller\MiIpsController.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\repository\TenantRolRepository.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\master\controller\IpsController.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\entity\HistoriaClinica.java
@@ -40,6 +42,7 @@ D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\service\ConsentimientoPdfService.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\config\DataInitializer.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\repository\PlantillaDocumentoRepository.java
+D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\entity\Notificacion.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\config\EmailService.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\service\SolicitudService.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\config\JwtAuthFilter.java
@@ -59,6 +62,7 @@ D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\controller\SolicitudController.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\repository\AuditoriaRepository.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\service\HistoriaClinicaPdfService.java
+D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\controller\NotificacionController.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\service\AuditoriaService.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\config\ApiExceptionHandler.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\config\TenantInterceptor.java
@@ -66,6 +70,7 @@ D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\controller\AuditoriaController.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\repository\SolicitudRepository.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\master\dto\IpsPublicDTO.java
+D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\service\NotificacionService.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\repository\ReporteRepository.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\ClinisignApplication.java
 D:\17. PROYECTOS PRUEBAS\clinisign\clinisign\backend\src\main\java\com\clinisign\tenant\service\ConsentimientoService.java

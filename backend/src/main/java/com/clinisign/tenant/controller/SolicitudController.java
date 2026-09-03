@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/solicitudes")
@@ -28,7 +29,15 @@ public class SolicitudController {
     }
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizar(@PathVariable Long id, @RequestBody Map<String, Object> b) {
-        permiso.requerirOperacionSolicitud();
+        String rol = permiso.rolActual();
+        if ("AUXILIAR".equals(rol)) {
+            Object estado = b.get("estado");
+            if (estado == null || !Set.of("EN_RUTA", "COMPLETADA", "ENTREGADO").contains(estado.toString())) {
+                throw new RuntimeException("El auxiliar solo puede marcar En ruta o Paciente entregado.");
+            }
+        } else {
+            permiso.requerirOperacionSolicitud();
+        }
         return ResponseEntity.ok(service.actualizar(id, b));
     }
     @DeleteMapping("/{id}")

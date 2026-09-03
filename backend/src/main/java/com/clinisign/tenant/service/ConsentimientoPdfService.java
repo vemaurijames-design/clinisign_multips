@@ -66,11 +66,7 @@ public class ConsentimientoPdfService {
                     .setFontSize(9).setTextAlignment(TextAlignment.CENTER).setMarginBottom(15));
 
             String ipsNombre = ips != null ? ips.getNombre() : "la IPS";
-            String paciente = "";
-            if (c.getHistoriaClinica() != null && c.getHistoriaClinica().getPaciente() != null) {
-                paciente = nz(c.getHistoriaClinica().getPaciente().getNombre()) + " "
-                        + nz(c.getHistoriaClinica().getPaciente().getApellido());
-            }
+            String paciente = nz(c.getDocumento());
             doc.add(new Paragraph("Yo " + paciente + " identificado con documento " + nz(c.getDocumento())
                     + " en calidad de " + nz(c.getCalidad()) + ".")
                     .setFontSize(10).setMarginBottom(6));

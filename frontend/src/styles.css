@@ -201,10 +201,16 @@ textarea { min-height: 70px; }
   font-weight: 600;
 }
 .login-submit {
-  margin-top: 6px;
-  padding: 12px 16px;
-  border-radius: 12px;
+  margin-top: 10px;
+  padding: 13px 16px;
+  border-radius: 14px;
   font-weight: 700;
+  width: 100%;
+}
+.login-card select, .login-card input {
+  border-radius: 12px;
+  border: 1px solid #d5e0ee;
+  padding: 10px 12px;
 }
 .login-foot {
   margin-top: 18px;

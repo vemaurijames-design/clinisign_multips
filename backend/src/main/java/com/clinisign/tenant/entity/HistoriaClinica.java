@@ -84,6 +84,24 @@ public class HistoriaClinica {
     private String recomendaciones;
     @Column(name = "detalle_json", columnDefinition = "TEXT")
     private String detalleJson;
+    @Column(name = "placa_movil")
+    private String placaMovil;
+    private String origen;
+    private String destino1;
+    private String destino2;
+    private String conductor;
+    private String tripulante;
+    @Column(name = "hora_despacho")
+    private String horaDespacho;
+    @Column(name = "hora_llegada")
+    private String horaLlegada;
+    @Column(name = "hora_salida")
+    private String horaSalida;
+    private String alcohol;
+    private String fumador;
+    private String spa;
+    private String piel;
+    private String hemo;
     @Column(name = "firma_paciente", columnDefinition = "TEXT")
     private String firmaPaciente;
     @Column(name = "firma_acompanante", columnDefinition = "TEXT")

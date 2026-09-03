@@ -120,11 +120,84 @@ public class DataSourceManager {
                 ALTER TABLE citas ADD COLUMN IF NOT EXISTS creado_por VARCHAR(250);
                 ALTER TABLE consentimientos ADD COLUMN IF NOT EXISTS registrado_por VARCHAR(250);
                 ALTER TABLE solicitudes_servicio ADD COLUMN IF NOT EXISTS registrado_por VARCHAR(250);
+                ALTER TABLE solicitudes_servicio ADD COLUMN IF NOT EXISTS asignado_a VARCHAR(200);
                 ALTER TABLE consentimientos ADD COLUMN IF NOT EXISTS plantilla_id BIGINT;
                 ALTER TABLE consentimientos ADD COLUMN IF NOT EXISTS consecutivo INTEGER;
                 ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS detalle_json TEXT;
                 ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS firma_paciente TEXT;
                 ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS firma_acompanante TEXT;
+                CREATE TABLE IF NOT EXISTS notificaciones (
+                    id BIGSERIAL PRIMARY KEY,
+                    rol_destino VARCHAR(50),
+                    titulo VARCHAR(200),
+                    mensaje TEXT,
+                    modulo VARCHAR(80),
+                    entidad_id BIGINT,
+                    leida BOOLEAN DEFAULT FALSE,
+                    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                ALTER TABLE notificaciones ADD COLUMN IF NOT EXISTS titulo VARCHAR(200);
+                ALTER TABLE notificaciones ADD COLUMN IF NOT EXISTS modulo VARCHAR(80);
+                ALTER TABLE notificaciones ADD COLUMN IF NOT EXISTS entidad_id BIGINT;
+                ALTER TABLE notificaciones ADD COLUMN IF NOT EXISTS rol_destino VARCHAR(50);
+                ALTER TABLE notificaciones ADD COLUMN IF NOT EXISTS fecha_creacion TIMESTAMP;
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS alcohol VARCHAR(20);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS fumador VARCHAR(20);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS spa VARCHAR(20);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS placa_movil VARCHAR(40);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS origen VARCHAR(200);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS destino1 VARCHAR(200);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS destino2 VARCHAR(200);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS conductor VARCHAR(200);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS tripulante VARCHAR(200);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS hora_despacho VARCHAR(20);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS hora_llegada VARCHAR(20);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS hora_salida VARCHAR(20);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS piel VARCHAR(80);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS hemo VARCHAR(80);
+                ALTER TABLE pacientes ADD COLUMN IF NOT EXISTS ocupacion VARCHAR(120);
+                ALTER TABLE pacientes ADD COLUMN IF NOT EXISTS estado_civil VARCHAR(40);
+                ALTER TABLE pacientes ADD COLUMN IF NOT EXISTS municipio VARCHAR(120);
+                ALTER TABLE pacientes ADD COLUMN IF NOT EXISTS aseguramiento VARCHAR(80);
+                ALTER TABLE pacientes ADD COLUMN IF NOT EXISTS parentesco VARCHAR(80);
+                ALTER TABLE pacientes ADD COLUMN IF NOT EXISTS tipo_traslado VARCHAR(40);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS complicaciones_traslado TEXT;
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS desfibrilacion VARCHAR(80);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS destino_final VARCHAR(200);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS entidad_receptora VARCHAR(200);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS entrega_fc VARCHAR(40);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS entrega_fr VARCHAR(40);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS entrega_glasgow VARCHAR(40);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS entrega_glucometria VARCHAR(40);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS entrega_spo2 VARCHAR(40);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS entrega_ta VARCHAR(40);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS entrega_temp VARCHAR(40);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS estado_civil VARCHAR(40);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS estado_hemodinamico VARCHAR(80);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS firma_entidad TEXT;
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS firma_entidad_receptora TEXT;
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS glucometria VARCHAR(40);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS hora_ultima_ingesta VARCHAR(40);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS instrucciones_traslado TEXT;
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS lesiones_marcadas TEXT;
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS localizacion_lesiones TEXT;
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS nombre_asigna_traslado VARCHAR(200);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS ocupacion VARCHAR(120);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS otra_antecedente TEXT;
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS otros_tratamientos TEXT;
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS sustancias_psicoactivas VARCHAR(40);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS tipo_aseguramiento VARCHAR(80);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS tipo_traslado_servicio VARCHAR(80);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS trat_a TEXT;
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS trat_b TEXT;
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS trat_c TEXT;
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS trat_x TEXT;
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS peso VARCHAR(20);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS talla VARCHAR(20);
+                ALTER TABLE notificaciones ADD COLUMN IF NOT EXISTS tipo VARCHAR(80) DEFAULT 'AVISO';
+                ALTER TABLE notificaciones ALTER COLUMN tipo DROP NOT NULL;
+                ALTER TABLE notificaciones ALTER COLUMN tipo SET DEFAULT 'AVISO';
+                UPDATE notificaciones SET tipo = 'AVISO' WHERE tipo IS NULL;
                 CREATE TABLE IF NOT EXISTS plantillas_documento (
                     id BIGSERIAL PRIMARY KEY,
                     tipo VARCHAR(40),

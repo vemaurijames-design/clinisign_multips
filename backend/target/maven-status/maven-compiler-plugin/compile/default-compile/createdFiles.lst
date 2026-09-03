@@ -45,6 +45,7 @@ com\clinisign\tenant\controller\PacienteController.class
 com\clinisign\tenant\entity\Cita.class
 com\clinisign\tenant\service\PdfPlantillaAnalyzer.class
 com\clinisign\tenant\entity\Usuario.class
+com\clinisign\tenant\controller\MiIpsController.class
 com\clinisign\config\SecurityConfig.class
 com\clinisign\config\WhatsAppService.class
 com\clinisign\tenant\controller\AmbulanciaController.class
@@ -65,6 +66,7 @@ com\clinisign\master\dto\IpsPublicDTO.class
 com\clinisign\tenant\controller\HistoriaClinicaController.class
 com\clinisign\tenant\service\AuditoriaService.class
 com\clinisign\master\service\SuperadminStaffService.class
+com\clinisign\tenant\service\NotificacionService.class
 com\clinisign\master\entity\Ips.class
 com\clinisign\master\dto\IpsDTO.class
 com\clinisign\tenant\repository\AuditoriaRepository.class
@@ -73,12 +75,15 @@ com\clinisign\master\repository\SuperadminUserRepository.class
 com\clinisign\ClinisignApplication.class
 com\clinisign\tenant\repository\ReporteRepository.class
 com\clinisign\master\entity\SuperadminUser.class
+com\clinisign\tenant\repository\NotificacionRepository.class
 com\clinisign\tenant\controller\ConsentimientoController.class
 com\clinisign\tenant\repository\AmbulanciaRepository.class
 com\clinisign\config\DataSourceManager.class
 com\clinisign\tenant\repository\PlantillaDocumentoRepository.class
 com\clinisign\master\controller\SuperadminController.class
+com\clinisign\tenant\controller\NotificacionController.class
 com\clinisign\config\DataInitializer.class
 com\clinisign\tenant\controller\PlantillaDocumentoController.class
 com\clinisign\tenant\entity\Rol.class
 com\clinisign\config\JwtAuthFilter.class
+com\clinisign\tenant\entity\Notificacion.class
