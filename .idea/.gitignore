@@ -1,3 +1,25 @@
 # Default ignored files
 /shelf/
 /workspace.xml
+
+# Backend
+backend/target/
+backend/uploads/
+backend/*.log
+backend/.idea/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
