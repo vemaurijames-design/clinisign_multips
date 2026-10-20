@@ -3,7 +3,7 @@ services:
     image: postgres:15
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: admin123
+      POSTGRES_PASSWORD: 1234567
       POSTGRES_DB: clinisign_master
     ports:
       - "5432:5432"
@@ -24,10 +24,10 @@ services:
       SERVER_PORT: 8080
       MASTER_DB_URL: jdbc:postgresql://postgres:5432/clinisign_master
       MASTER_DB_USER: postgres
-      MASTER_DB_PASSWORD: admin123
+      MASTER_DB_PASSWORD: 1234567
       PROVISIONING_DB_URL: jdbc:postgresql://postgres:5432/
       PROVISIONING_DB_USER: postgres
-      PROVISIONING_DB_PASSWORD: admin123
+      PROVISIONING_DB_PASSWORD: 1234567
       TENANT_DB_HOST: postgres
       TENANT_DB_PORT: 5432
       CORS_ORIGINS: http://localhost:5173,http://localhost:3000,http://localhost:8080
