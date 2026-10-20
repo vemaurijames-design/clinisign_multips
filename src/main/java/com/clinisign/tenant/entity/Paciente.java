@@ -1,0 +1,59 @@
+package com.clinisign.tenant.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.Date;
+
+@Entity
+@Table(name = "pacientes")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Paciente {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Column(name = "tipo_documento")
+    private String tipoDocumento = "CC";
+    @Column(nullable = false, unique = true)
+    private String documento;
+    @Column(nullable = false)
+    private String nombre;
+    private String apellido;
+    @Column(name = "fecha_nacimiento")
+    private Date fechaNacimiento;
+    private Integer edad;
+    private String genero;
+    private String direccion;
+    private String telefono;
+    private String ciudad;
+    private String eps;
+    private String rh;
+    @Column(name = "contacto_nombre")
+    private String contactoNombre;
+    @Column(name = "contacto_telefono")
+    private String contactoTelefono;
+    private String antecedentes;
+    private String alergias;
+    private String medicamentos;
+    private String ocupacion;
+    @Column(name = "estado_civil")
+    private String estadoCivil;
+    private String municipio;
+    private String aseguramiento;
+    private String parentesco;
+    @Column(name = "tipo_traslado")
+    private String tipoTraslado;
+    @Column(name = "registrado_por")
+    private String registradoPor;
+    @Column(name = "fecha_creacion")
+    private Date fechaCreacion;
+
+    @PrePersist
+    void prePersist() {
+        if (fechaCreacion == null) fechaCreacion = new Date();
+    }
+}
