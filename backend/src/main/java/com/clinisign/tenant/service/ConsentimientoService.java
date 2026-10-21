@@ -139,13 +139,26 @@ public class ConsentimientoService {
         if (!notBlank(destino)) {
             throw new RuntimeException("Indique el correo o configure el correo institucional de la IPS.");
         }
-        String html = "<p>Se adjunta el documento clínico de CliniSign.</p>"
-                + "<p><b>Tipo:</b> " + c.getTipo() + "<br/>"
-                + "<b>Código:</b> " + c.getCodigo() + "-" + c.getConsecutivo() + "<br/>"
-                + "<b>Documento del paciente:</b> " + c.getDocumento() + "<br/>"
-                + "<b>Calidad:</b> " + c.getCalidad() + "<br/>"
-                + "<b>Teléfono:</b> " + c.getTelefono() + "</p>"
-                + "<p>Este correo es de respaldo institucional. Historia clínica reservada (Ley 23 de 1981).</p>";
+        Ips ips = TenantContext.getIpsId() != null ? ipsRepository.findById(TenantContext.getIpsId()).orElse(null) : null;
+        String ipsNombre = ips != null && ips.getNombre() != null ? ips.getNombre() : "IPS";
+        String ipsCorreo = ips != null && ips.getCorreo() != null ? ips.getCorreo() : "";
+        String ipsTel = ips != null && ips.getTelefono() != null ? ips.getTelefono() : "";
+        String html = "<div style='font-family:Arial,sans-serif;color:#1a2a4a'>"
+                + "<h2 style='color:#0a3d7a'>" + ipsNombre + "</h2>"
+                + "<p>Se adjunta el documento clínico generado en CliniSign.</p>"
+                + "<table style='border-collapse:collapse;width:100%'>"
+                + "<tr><td style='padding:6px;border:1px solid #ddd'><b>Tipo</b></td><td style='padding:6px;border:1px solid #ddd'>" + c.getTipo() + "</td></tr>"
+                + "<tr><td style='padding:6px;border:1px solid #ddd'><b>Código</b></td><td style='padding:6px;border:1px solid #ddd'>" + c.getCodigo() + "-" + c.getConsecutivo() + "</td></tr>"
+                + "<tr><td style='padding:6px;border:1px solid #ddd'><b>Documento del paciente</b></td><td style='padding:6px;border:1px solid #ddd'>" + (c.getDocumento() != null ? c.getDocumento() : "") + "</td></tr>"
+                + "<tr><td style='padding:6px;border:1px solid #ddd'><b>Calidad del firmante</b></td><td style='padding:6px;border:1px solid #ddd'>" + (c.getCalidad() != null ? c.getCalidad() : "") + "</td></tr>"
+                + "<tr><td style='padding:6px;border:1px solid #ddd'><b>Teléfono</b></td><td style='padding:6px;border:1px solid #ddd'>" + (c.getTelefono() != null ? c.getTelefono() : "") + "</td></tr>"
+                + "<tr><td style='padding:6px;border:1px solid #ddd'><b>Registrado por</b></td><td style='padding:6px;border:1px solid #ddd'>" + (c.getRegistradoPor() != null ? c.getRegistradoPor() : "") + "</td></tr>"
+                + "</table>"
+                + "<p style='margin-top:12px'><b>IPS:</b> " + ipsNombre + "<br/>"
+                + "<b>Correo IPS:</b> " + ipsCorreo + "<br/>"
+                + "<b>Teléfono IPS:</b> " + ipsTel + "</p>"
+                + "<p style='font-size:12px;color:#666'>Documento de respaldo institucional. Historia clínica reservada (Ley 23 de 1981 y Res. 1995 de 1999).</p>"
+                + "</div>";
         byte[] pdf = pdfService.generarPdf(id);
         emailService.enviarPdf(TenantContext.getIpsId(), destino,
                 c.getTipo() + " " + c.getCodigo() + "-" + c.getConsecutivo() + " doc " + c.getDocumento(),

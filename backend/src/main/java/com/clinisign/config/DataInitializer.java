@@ -60,9 +60,9 @@ public class DataInitializer implements CommandLineRunner {
                 cfg.setSmtpPort(587);
                 cfg.setSmtpAuth(true);
                 cfg.setSmtpStarttls(true);
-                cfg.setSmtpUsername("siansalud2024@hotmail.com");
-                cfg.setSmtpPassword("owyapxlycgeecqet");
-                cfg.setCorreoFrom("siansalud2024@hotmail.com");
+                cfg.setSmtpUsername("notificacionesclinisign@hotmail.com");
+                cfg.setSmtpPassword("GQDCUQHFAJWEG7WPQWRP2YYFD");
+                cfg.setCorreoFrom("notificacionesclinisign@hotmail.com");
                 ipsConfigRepository.save(cfg);
                 log.info("SMTP Hotmail configurado para IPS {}", ips.getNombre());
             }

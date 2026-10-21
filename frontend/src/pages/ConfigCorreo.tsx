@@ -7,7 +7,7 @@ export default function ConfigCorreo() {
   const tenantId = ipsId && ipsId !== 'null' ? Number(ipsId) : null;
   const [ips, setIps] = useState<any>({});
   const [form, setForm] = useState<any>({
-    smtpHost: 'smtp-mail.outlook.com', smtpPort: 587, smtpUsername: 'siansalud2024@hotmail.com', smtpPassword: '',
+    smtpHost: 'smtp-mail.outlook.com', smtpPort: 587, smtpUsername: 'notificacionesclinisign@hotmail.com', smtpPassword: '',
     correoFrom: '', whatsappEnabled: false, whatsappToken: '', whatsappPhoneNumberId: '',
   });
   const [msg, setMsg] = useState('');
@@ -71,11 +71,13 @@ export default function ConfigCorreo() {
       </div>
 
       <div className="card">
-        <h3>SMTP (Hotmail / Outlook)</h3>
+        <h3>SMTP (correo de la IPS)</h3>
         <ol className="hint">
-          <li>Host: smtp-mail.outlook.com · Puerto 587 · STARTTLS.</li>
-          <li>Usuario: correo de la IPS. Clave: contraseña de aplicación de 16 letras.</li>
-          <li>SIAN ya puede usar siansalud2024@hotmail.com si el arranque sembró la clave.</li>
+          <li>Gmail: host <b>smtp.gmail.com</b> · Puerto <b>587</b>.</li>
+          <li>Hotmail: host <b>smtp-mail.outlook.com</b> · Puerto <b>587</b>.</li>
+          <li>Usuario y From deben ser el mismo correo.</li>
+          <li>Use la clave de aplicación (no la contraseña normal). Sin espacios ni guiones.</li>
+          <li>Guarde y pulse <b>Probar SMTP</b>.</li>
         </ol>
         <div className="form-grid">
           <input placeholder="Host smtp.gmail.com" value={form.smtpHost || ''} onChange={e => setForm({ ...form, smtpHost: e.target.value })} />

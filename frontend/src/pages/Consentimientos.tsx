@@ -25,8 +25,11 @@ export default function Consentimientos() {
   const [tipoNuevo, setTipoNuevo] = useState<'CONSENTIMIENTO' | 'DESISTIMIENTO'>('CONSENTIMIENTO');
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [filtro, setFiltro] = useState('');
+
   const cargar = () => consentimientoService.listar().then(r => setItems(r.data || [])).catch(() => setItems([]));
+
   useEffect(() => { cargar(); }, []);
+
   useEffect(() => {
     const t = (params.get('tipo') || '').toUpperCase();
     if (t === 'CONSENTIMIENTO' || t === 'DESISTIMIENTO') {
@@ -34,6 +37,7 @@ export default function Consentimientos() {
       setShow(true);
     }
   }, [params]);
+
   return (
     <div>
       <div className="page-head">
@@ -46,11 +50,14 @@ export default function Consentimientos() {
           <button onClick={() => { setTipoNuevo('DESISTIMIENTO'); setShow(true); }}>Desistimiento HC-FM-06</button>
         </div>
       </div>
+
       {show && <DocumentoSian tipo={tipoNuevo} onDone={() => { setShow(false); cargar(); }} onCancel={() => setShow(false)} />}
+
       <div className="toolbar">
         <input placeholder="Buscar por cédula o tipo" value={filtro} onChange={e => setFiltro(e.target.value)} />
         <button type="button" className="btn-primary">Buscar</button>
       </div>
+
       {pdfUrl && (
         <div className="card">
           <iframe className="pdf-frame" src={pdfUrl} title="PDF" />
@@ -58,6 +65,7 @@ export default function Consentimientos() {
           <button onClick={() => setPdfUrl(null)}>Cerrar</button>
         </div>
       )}
+
       <div className="table-wrap">
         <table className="data-table">
           <thead><tr><th>Consecutivo</th><th>Tipo</th><th>Código</th><th>Documento</th><th>Firmado</th><th>Correo</th><th></th></tr></thead>
@@ -105,11 +113,14 @@ function DocumentoSian({ tipo, onDone, onCancel }: { tipo: string; onDone: () =>
   const [leido, setLeido] = useState(false);
   const [hora] = useState(new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }));
   const [fecha] = useState(new Date().toLocaleDateString('es-CO'));
+
   const firmaRef = useRef<any>(null);
   const huellaRef = useRef<any>(null);
+
   const lista = tipo === 'DESISTIMIENTO' ? DES : CONS;
   const [plantilla, setPlantilla] = useState<any>(null);
   const codigo = plantilla?.codigo || (tipo === 'DESISTIMIENTO' ? 'HC-FM-06' : 'HC-FM-04');
+
   useEffect(() => {
     plantillaService.porTipo(tipo).then(r => setPlantilla(r.data)).catch(() => setPlantilla(null));
   }, [tipo]);
@@ -123,31 +134,43 @@ function DocumentoSian({ tipo, onDone, onCancel }: { tipo: string; onDone: () =>
   const guardar = async () => {
     if (!pac) return alert('Busque o cree el paciente');
     if (!leido) return alert('Debe confirmar que el paciente leyó el documento');
+
     const firma = firmaRef.current?.toDataURL?.() || firmaRef.current?.getBase64?.();
+    const huella = huellaRef.current?.toDataURL?.() || huellaRef.current?.getBase64?.();
+
+    // VALIDACIÓN ESTRICTA: Firma y huella son obligatorias
     if (!firma || String(firma).length < 80) {
-      return alert('Firme en el recuadro azul: mantenga presionado y dibuje.');
+      return alert('Es obligatorio que el paciente firme en el recuadro azul.');
     }
-    await consentimientoService.crear({
-      tipo,
-      codigo,
-      plantillaId: plantilla?.id,
-      beneficios: plantilla?.beneficios,
-      riesgos: plantilla?.riesgos,
-      alternativas: plantilla?.alternativas,
-      observaciones: plantilla?.textoLegal,
-      documento: pac.documento,
-      telefono: pac.telefono,
-      calidad: calidad + (responsableDe ? ' de ' + responsableDe : ''),
-      procedimientos: [...procs, otro].filter(Boolean).join('; '),
-      nombreAcompanante: acomp,
-      nombreAuxiliar: aux,
-      registroAuxiliar: reg,
-      documentoAcompanante: docAux,
-      firma,
-      huellaDigital: huellaRef.current?.toDataURL?.() || huellaRef.current?.getBase64?.(),
-      firmado: true,
-    });
-    onDone();
+    if (!huella || String(huella).length < 80) {
+      return alert('Es obligatorio que el paciente coloque su huella digital.');
+    }
+
+    try {
+      await consentimientoService.crear({
+        tipo,
+        codigo,
+        plantillaId: plantilla?.id,
+        beneficios: plantilla?.beneficios,
+        riesgos: plantilla?.riesgos,
+        alternativas: plantilla?.alternativas,
+        observaciones: plantilla?.textoLegal,
+        documento: pac.documento,
+        telefono: pac.telefono,
+        calidad: calidad + (responsableDe ? ' de ' + responsableDe : ''),
+        procedimientos: [...procs, otro].filter(Boolean).join('; '),
+        nombreAcompanante: acomp,
+        nombreAuxiliar: aux,
+        registroAuxiliar: reg,
+        documentoAcompanante: docAux,
+        firma,
+        huellaDigital: huella,
+        firmado: true,
+      });
+      onDone();
+    } catch (e: any) {
+      alert(e.response?.data?.message || 'Error al guardar. Revise la consola del backend.');
+    }
   };
 
   return (
@@ -240,8 +263,11 @@ function DocumentoSian({ tipo, onDone, onCancel }: { tipo: string; onDone: () =>
       )}
 
       <label className="hint"><input type="checkbox" checked={leido} onChange={e => setLeido(e.target.checked)} /> El paciente leyó y comprendió este documento</label>
+
+      {/* Etiquetas con (*) indicando que son obligatorios */}
       <SignaturePad ref={firmaRef} label="Firma del paciente (*)" />
-      <SignaturePad ref={huellaRef} label="Huella digital" />
+      <SignaturePad ref={huellaRef} label="Huella digital (*)" />
+
       <label>Acompañante mayor de edad responsable (*)<input className="linea" value={acomp} onChange={e => setAcomp(e.target.value)} /></label>
       <p className="hint">Usuario que registra este documento: <strong>{nombre}</strong> · {rol} · {email}. El APH se precarga con la sesión.</p>
       <label>Auxiliar de Enfermería/APH que transporta (*)<input className="linea" value={aux} onChange={e => setAux(e.target.value)} /></label>

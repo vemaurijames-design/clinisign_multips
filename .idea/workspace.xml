@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="6539afa5-c527-47f9-b0fc-a499309e8f8a" name="Changes" comment="Listo para despliegue en VPS">
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinisign/config/BackupService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/backend/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinisign/config/DataInitializer.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinisign/config/DataInitializer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinisign/config/EmailService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinisign/config/EmailService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinisign/config/WebConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinisign/config/WebConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinisign/tenant/service/ConsentimientoPdfService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinisign/tenant/service/ConsentimientoPdfService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinisign/tenant/service/ConsentimientoService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinisign/tenant/service/ConsentimientoService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/clinisign/tenant/service/HistoriaClinicaPdfService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/clinisign/tenant/service/HistoriaClinicaPdfService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/target/classes/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/target/classes/com/clinisign/config/DataInitializer.class" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/com/clinisign/config/DataInitializer.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/target/classes/com/clinisign/config/EmailService.class" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/com/clinisign/config/EmailService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/target/classes/com/clinisign/config/WebConfig.class" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/com/clinisign/config/WebConfig.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/target/classes/com/clinisign/tenant/service/ConsentimientoPdfService.class" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/com/clinisign/tenant/service/ConsentimientoPdfService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/target/classes/com/clinisign/tenant/service/ConsentimientoService.class" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/com/clinisign/tenant/service/ConsentimientoService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/target/classes/com/clinisign/tenant/service/HistoriaClinicaPdfService.class" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/classes/com/clinisign/tenant/service/HistoriaClinicaPdfService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/backend/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/env.example" beforeDir="false" afterPath="$PROJECT_DIR$/env.example" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/ConfigCorreo.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/ConfigCorreo.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Consentimientos.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Consentimientos.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Dashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Dashboard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/HistoriaClinica.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/HistoriaClinica.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/ClinisignApplication.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/config/ActorContext.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/config/AgendaScheduler.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/config/ApiExceptionHandler.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/config/DataInitializer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/config/DataSourceManager.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/config/EmailService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/config/JwtAuthFilter.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/config/JwtService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/config/MasterDataSourceConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/config/ModelMapperConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/config/RoutingDataSource.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/config/SecurityConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/config/TenantContext.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/config/TenantDataSourceConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/config/TenantInterceptor.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/config/TenantSchemaFixer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/config/WebConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/config/WhatsAppService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/master/controller/AuthController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/master/controller/IpsController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/master/controller/SuperadminController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/master/dto/AuthResponse.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/master/dto/IpsDTO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/master/dto/IpsPublicDTO.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/master/dto/LoginRequest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/master/entity/Ips.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/master/entity/IpsConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/master/entity/Rol.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/master/entity/SuperadminUser.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/master/repository/IpsConfigRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/master/repository/IpsRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/master/repository/MasterRolRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/master/repository/SuperadminUserRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/master/service/AuthService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/master/service/IpsProvisioningService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/master/service/SuperadminStaffService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/controller/AmbulanciaController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/controller/AuditoriaController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/controller/CitaController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/controller/ConsentimientoController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/controller/HistoriaClinicaController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/controller/MiIpsController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/controller/NotificacionController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/controller/PacienteController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/controller/PlantillaDocumentoController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/controller/ReporteController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/controller/SolicitudController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/controller/UsuarioController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/entity/Ambulancia.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/entity/Auditoria.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/entity/Cita.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/entity/Consentimiento.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/entity/HistoriaClinica.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/entity/Notificacion.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/entity/Paciente.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/entity/PlantillaDocumento.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/entity/Reporte.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/entity/Rol.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/entity/SolicitudServicio.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/entity/Usuario.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/repository/AmbulanciaRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/repository/AuditoriaRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/repository/CitaRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/repository/ConsentimientoRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/repository/HistoriaClinicaRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/repository/NotificacionRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/repository/PacienteRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/repository/PlantillaDocumentoRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/repository/ReporteRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/repository/SolicitudRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/repository/TenantRolRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/repository/UsuarioRepository.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/service/AmbulanciaService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/service/AuditoriaService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/service/CitaService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/service/ConsentimientoPdfService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/service/ConsentimientoService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/service/HistoriaClinicaPdfService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/service/HistoriaClinicaService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/service/NotificacionService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/service/PacienteService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/service/PdfPlantillaAnalyzer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/service/PlantillaDocumentoService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/service/ReporteService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/service/SolicitudService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/tenant/service/UsuarioService.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/clinisign/util/PermisoUtil.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/database/master-init.sql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/database/migration-hc.sql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/schema-tenant.sql" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="DBNavigator.Project.Workspace.Settings">
+    <assistant-settings>
+      <credential-settings>
+        <credentials />
+      </credential-settings>
+      <profile-settings>
+        <profiles />
+      </profile-settings>
+      <mcp-server-settings>
+        <workspace-integration value="false" />
+        <mcp-servers />
+        <mcp-tool-approvals />
+      </mcp-server-settings>
+    </assistant-settings>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="PUSH_AUTO_UPDATE" value="true" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="ROOT_SYNC" value="DONT_SYNC" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;vemaurijames-design&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/vemaurijames-design/clinisign_multips.git&quot;,
+    &quot;accountId&quot;: &quot;220388e7-5b37-4224-8713-e8c10fb7efeb&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 0
+}</component>
+  <component name="ProjectId" id="3KvGJUxnRoOi2Q45t2kfdt0glmy" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_MARK_IGNORED_FILES_AS_EXCLUDED&quot;: &quot;true&quot;,
+    &quot;Maven.clinisign [clean,install].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.clinisign [clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.clinisign [compile].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.clinisign [install].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.clinisign [verify].executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/4. BACKUSP CLINISIGN ACT/clinisign_muiltiapp&quot;
+  }
+}</component>
+  <component name="RunManager">
+    <configuration default="true" type="JetRunConfigurationType">
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
+      <option name="filePath" />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="6539afa5-c527-47f9-b0fc-a499309e8f8a" name="Changes" comment="" />
+      <created>1792430556708</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1792430556708</updated>
+    </task>
+    <task id="LOCAL-00001" summary="Listo para despliegue en VPS">
+      <option name="closed" value="true" />
+      <created>1792521221641</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1792521221641</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Listo para despliegue en VPS">
+      <option name="closed" value="true" />
+      <created>1792521251932</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1792521251932</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="listo para VPS" />
+    <MESSAGE value="Listo para despliegue en VPS" />
+    <option name="LAST_COMMIT_MESSAGE" value="Listo para despliegue en VPS" />
+    <option name="GROUP_MULTIFILE_MERGE_BY_DIRECTORY" value="true" />
+  </component>
+</project>

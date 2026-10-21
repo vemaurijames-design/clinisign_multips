@@ -12,6 +12,7 @@ export default function Dashboard() {
   const [expHc, setExpHc] = useState<any[]>([]);
   const [expCons, setExpCons] = useState<any[]>([]);
   const [notis, setNotis] = useState<any[]>([]);
+  const [showNotis, setShowNotis] = useState(true);
   const [sols, setSols] = useState<any[]>([]);
   const tenantId = ipsId && ipsId !== 'null' ? Number(ipsId) : null;
 
@@ -78,7 +79,11 @@ export default function Dashboard() {
         </div>
       </div>
       <div className="card">
-        <h3>Avisos del radiooperador</h3>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <h3>Avisos del radiooperador</h3>
+          <button type="button" onClick={() => setShowNotis(!showNotis)}>{showNotis ? "Ocultar" : "Mostrar"}</button>
+        </div>
+        {showNotis && <>
         {(notis || []).length === 0 && <p className="hint">Sin notificaciones nuevas en esta IPS.</p>}
         {(notis || []).slice(0, 8).map((n: any) => (
           <p key={n.id}><strong>{n.titulo || 'Aviso'}</strong>: {n.mensaje}</p>
@@ -88,6 +93,7 @@ export default function Dashboard() {
         {(sols || []).slice(0, 8).map((s: any) => (
           <p key={s.id} className="hint">{s.tipo || s.prioridad || 'Solicitud'} · {s.estado} · {s.direccionOrigen || s.origen || ''} <Link to="/solicitudes">abrir</Link></p>
         ))}
+      </>}
       </div>
       <div className="grid-stats">
         {cards.map(([k, label]) => {

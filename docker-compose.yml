@@ -30,16 +30,23 @@ services:
       PROVISIONING_DB_PASSWORD: 1234567
       TENANT_DB_HOST: postgres
       TENANT_DB_PORT: 5432
-      CORS_ORIGINS: http://localhost:5173,http://localhost:3000,http://localhost:8080
+      CORS_ORIGINS: "*"
+      CLINISIGN_MAIL_HOST: smtp.gmail.com
+      CLINISIGN_MAIL_PORT: 587
+      CLINISIGN_MAIL_USERNAME: inforclinisign@gmail.com
+      CLINISIGN_MAIL_PASSWORD: zsmqvrubdibyejci
+      CLINISIGN_MAIL_FROM: inforclinisign@gmail.com
     ports:
       - "8080:8080"
+    restart: unless-stopped
 
   frontend:
     build: ./frontend
     depends_on:
       - backend
     ports:
-      - "5173:80"
+      - "80:80"
+    restart: unless-stopped
 
 volumes:
   clinisign_pg:

@@ -62,6 +62,7 @@ D:\4. BACKUSP CLINISIGN ACT\clinisign_muiltiapp\backend\src\main\java\com\clinis
 D:\4. BACKUSP CLINISIGN ACT\clinisign_muiltiapp\backend\src\main\java\com\clinisign\config\TenantDataSourceConfig.java
 D:\4. BACKUSP CLINISIGN ACT\clinisign_muiltiapp\backend\src\main\java\com\clinisign\tenant\entity\Auditoria.java
 D:\4. BACKUSP CLINISIGN ACT\clinisign_muiltiapp\backend\src\main\java\com\clinisign\tenant\repository\ReporteRepository.java
+D:\4. BACKUSP CLINISIGN ACT\clinisign_muiltiapp\backend\src\main\java\com\clinisign\config\BackupService.java
 D:\4. BACKUSP CLINISIGN ACT\clinisign_muiltiapp\backend\src\main\java\com\clinisign\tenant\entity\SolicitudServicio.java
 D:\4. BACKUSP CLINISIGN ACT\clinisign_muiltiapp\backend\src\main\java\com\clinisign\tenant\service\HistoriaClinicaService.java
 D:\4. BACKUSP CLINISIGN ACT\clinisign_muiltiapp\backend\src\main\java\com\clinisign\tenant\repository\PlantillaDocumentoRepository.java

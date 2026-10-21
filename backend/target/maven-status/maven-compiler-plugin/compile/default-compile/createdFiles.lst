@@ -4,6 +4,7 @@ com\clinisign\tenant\entity\Ambulancia.class
 com\clinisign\tenant\service\PlantillaDocumentoService.class
 com\clinisign\tenant\entity\SolicitudServicio.class
 com\clinisign\tenant\service\PacienteService.class
+com\clinisign\config\BackupService.class
 com\clinisign\tenant\service\UsuarioService.class
 com\clinisign\config\TenantDataSourceConfig.class
 com\clinisign\tenant\service\AmbulanciaService.class

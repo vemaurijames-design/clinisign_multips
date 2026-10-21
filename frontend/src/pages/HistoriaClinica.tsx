@@ -58,7 +58,7 @@ export default function HistoriaClinica() {
         <button type="button" className="btn-primary" onClick={() => setBuscado(q)}>Buscar</button>
       </div>
       {showForm && <HCForm onSave={async (data: any) => {
-        await historiaClinicaService.crear(data); setShowForm(false); cargar();
+        await historiaClinicaService.crear(data); localStorage.removeItem('hc_borrador'); setShowForm(false); cargar();
       }} onCancel={() => setShowForm(false)} />}
       <div className="table-wrap">
         <table className="data-table">
@@ -89,6 +89,7 @@ function HCForm({ onSave, onCancel }: any) {
   const now = new Date();
   const [pac, setPac] = useState<any>(null);
   const [alta, setAlta] = useState({ nombre: '', apellido: '', documento: '', telefono: '', tipoDocumento: 'CC', direccion: '', eps: '', genero: 'M', edad: '' });
+
   const [form, setForm] = useState<any>({
     fechaAtencion: now.toISOString().slice(0, 10),
     horaAtencion: now.toTimeString().slice(0, 5),
@@ -105,6 +106,21 @@ function HCForm({ onSave, onCancel }: any) {
     instruccion: '', resultado: '', docAcompanante: '', nombreAcompanante: '', complicaciones: '', asignaTraslado: '',
     nombreProfesional: nombre || email || '', registroProfesional: '',
   });
+    // Auto-save draft
+  useEffect(() => {
+    const saved = localStorage.getItem('historiaClinicaDraft');
+    if (saved) {
+      try { setForm(prev => ({ ...prev, ...JSON.parse(saved) })); } catch {}
+    }
+  }, []);
+  useEffect(() => {
+    localStorage.setItem('historiaClinicaDraft', JSON.stringify(form));
+  }, [form]);
+  const limpiarBorrador = () => {
+    localStorage.removeItem('historiaClinicaDraft');
+    alert('Borrador eliminado. Recargue para empezar de nuevo.');
+  };
+
   const [eventos, setEventos] = useState<string[]>([]);
   const [motMed, setMotMed] = useState<string[]>([]);
   const [motTra, setMotTra] = useState<string[]>([]);
@@ -116,7 +132,18 @@ function HCForm({ onSave, onCancel }: any) {
   const firmaP = useRef<any>(null);
   const firmaA = useRef<any>(null);
   const firmaH = useRef<any>(null);
-  const set = (k: string, v: string) => setForm({ ...form, [k]: v });
+  const set = (k: string, v: string) => {
+    const next = { ...form, [k]: v };
+    setForm(next);
+    try { localStorage.setItem('hc_borrador', JSON.stringify(next)); } catch {}
+  };
+  // Restaurar borrador al cargar
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('hc_borrador');
+      if (saved) setForm(JSON.parse(saved));
+    } catch {}
+  }, []);
   const validar = () => {
     if (!pac?.id) return alert('Busque y elija el paciente');
     if (!form.ta || !form.fc) return alert('TA y FC del examen físico son obligatorios');
@@ -242,12 +269,12 @@ function HCForm({ onSave, onCancel }: any) {
       </div>
 
       <h4>Página 2 — Evolución y procedimientos</h4>
-      <textarea placeholder="Evolución" value={form.evolucion} onChange={e => set('evolucion', e.target.value)} />
+      <textarea rows={8} style={{width:"100%",minHeight:140}} placeholder="Evolución (escribe todo el detalle de la atención)" value={form.evolucion} onChange={e => set('evolucion', e.target.value)} />
       <h4>8. Tratamiento X / A / B / C / D / E</h4>
       {chips([...TRAT_X, ...TRAT_A, ...TRAT_B, ...TRAT_C, ...TRAT_D, ...TRAT_E, ...OTROS], trat, setTrat)}
       <h4>9. Tratamiento avanzado</h4>
       {chips(TRAT_AV, trat, setTrat)}
-      <textarea placeholder="Detalle de tratamiento / litros / joules / cantidad" value={form.tratamiento} onChange={e => set('tratamiento', e.target.value)} />
+      <textarea rows={6} style={{width:"100%",minHeight:100}} placeholder="Detalle de tratamiento / litros / joules / cantidad" value={form.tratamiento} onChange={e => set('tratamiento', e.target.value)} />
 
       <h4>10–13. Traslado, resultado, complicaciones y entrega</h4>
       <div className="form-grid">
@@ -270,7 +297,7 @@ function HCForm({ onSave, onCancel }: any) {
         <input placeholder="13. Institución que recibe" value={form.destinoPaciente} onChange={e => set('destinoPaciente', e.target.value)} />
         <input placeholder="CIE-10" value={form.cie10Principal} onChange={e => set('cie10Principal', e.target.value)} />
       </div>
-      <textarea placeholder="12. Complicaciones durante traslado" value={form.complicaciones} onChange={e => set('complicaciones', e.target.value)} />
+      <textarea rows={5} style={{width:"100%",minHeight:90}} placeholder="12. Complicaciones durante traslado" value={form.complicaciones} onChange={e => set('complicaciones', e.target.value)} />
 
             <h4>Acompañante / responsable</h4>
       <div className="form-grid">

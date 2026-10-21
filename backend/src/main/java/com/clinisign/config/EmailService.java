@@ -1,10 +1,8 @@
 package com.clinisign.config;
 
-import com.clinisign.master.entity.IpsConfig;
-import com.clinisign.master.repository.IpsConfigRepository;
 import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -12,87 +10,103 @@ import org.springframework.stereotype.Service;
 import java.util.Properties;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class EmailService {
 
-    private final IpsConfigRepository ipsConfigRepository;
+    @Value("${clinisign.mail.host:smtp.gmail.com}")
+    private String systemHost;
 
-    private JavaMailSenderImpl createMailSender(IpsConfig config) {
-        JavaMailSenderImpl sender = new JavaMailSenderImpl();
-        sender.setHost(config.getSmtpHost());
-        sender.setPort(config.getSmtpPort() != null ? config.getSmtpPort() : 587);
-        sender.setUsername(config.getSmtpUsername());
-        sender.setPassword(config.getSmtpPassword() == null ? "" : config.getSmtpPassword().replace(" ", ""));
-        String user = config.getSmtpUsername() != null ? config.getSmtpUsername() : "";
-        String host = config.getSmtpHost();
-        if (host == null || host.isBlank()) {
-            host = user.toLowerCase().contains("gmail") ? "smtp.gmail.com" : "smtp-mail.outlook.com";
+    @Value("${clinisign.mail.port:587}")
+    private int systemPort;
+
+    @Value("${clinisign.mail.username:inforclinisign@gmail.com}")
+    private String systemUsername;
+
+    @Value("${clinisign.mail.password:}")
+    private String systemPassword;
+
+    @Value("${clinisign.mail.from:inforclinisign@gmail.com}")
+    private String systemFrom;
+
+    private JavaMailSenderImpl createSender() {
+        String pass = systemPassword == null ? "" : systemPassword.replaceAll("[^A-Za-z0-9]", "");
+        if (pass.isBlank()) {
+            throw new RuntimeException("Falta clinisign.mail.password en application.properties");
         }
-        sender.setHost(host);
-        sender.setPort(config.getSmtpPort() != null ? config.getSmtpPort() : 587);
-        sender.setUsername(user);
-        sender.setPassword(config.getSmtpPassword() == null ? "" : config.getSmtpPassword().replace(" ", ""));
+        log.info("SMTP → host={} port={} user={} passLen={}", systemHost, systemPort, systemUsername, pass.length());
+
+        JavaMailSenderImpl sender = new JavaMailSenderImpl();
+        sender.setHost(systemHost);
+        sender.setPort(systemPort);
+        sender.setUsername(systemUsername.trim());
+        sender.setPassword(pass);
+
         Properties props = sender.getJavaMailProperties();
         props.put("mail.transport.protocol", "smtp");
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
         props.put("mail.smtp.starttls.required", "true");
-        props.put("mail.smtp.ssl.trust", host);
+        props.put("mail.smtp.ssl.trust", systemHost);
+        props.put("mail.smtp.connectiontimeout", "15000");
+        props.put("mail.smtp.timeout", "15000");
         return sender;
     }
 
     public void probar(Long ipsId, String to) {
-        enviarConsentimiento(ipsId,
-                to != null && !to.isBlank() ? to : null,
-                "Prueba CliniSign",
-                "<p>SMTP de esta IPS funciona.</p>");
+        enviar(to, "Prueba CliniSign - " + systemFrom,
+                "<p>El correo de notificaciones de CliniSign funciona correctamente.</p>" +
+                        "<p><b>Remitente:</b> " + systemFrom + "</p>");
     }
 
     public void enviarConsentimiento(Long ipsId, String to, String subject, String htmlBody) {
-        IpsConfig config = ipsConfigRepository.findByIpsId(ipsId)
-                .orElseThrow(() -> new RuntimeException("No hay config SMTP para IPS " + ipsId));
-        if (config.getSmtpPassword() == null || config.getSmtpPassword().isBlank()) {
-            log.warn("SMTP sin contraseña para IPS {}. El correo no se envía.", ipsId);
-            throw new RuntimeException("SMTP no configurado para esta IPS");
-        }
-        try {
-            JavaMailSenderImpl sender = createMailSender(config);
-            MimeMessage message = sender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(config.getSmtpUsername() != null && !config.getSmtpUsername().isBlank() ? config.getSmtpUsername().trim() : (config.getCorreoFrom() != null ? config.getCorreoFrom() : "noreply@clinisign.local"));
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(htmlBody, true);
-            sender.send(message);
-            log.info("Correo enviado a {} desde IPS {}", to, ipsId);
-        } catch (Exception e) {
-            throw new RuntimeException("Error enviando correo: " + e.getMessage(), e);
-        }
+        enviar(to, subject, htmlBody);
     }
 
     public void enviarPdf(Long ipsId, String to, String subject, String htmlBody, byte[] pdf, String filename) {
-        IpsConfig config = ipsConfigRepository.findByIpsId(ipsId)
-                .orElseThrow(() -> new RuntimeException("No hay config SMTP para IPS " + ipsId));
-        if (config.getSmtpPassword() == null || config.getSmtpPassword().isBlank()) {
-            throw new RuntimeException("Configure la clave de aplicación SMTP de esta IPS (menú Configuración / correo).");
-        }
+        enviarConAdjunto(to, subject, htmlBody, pdf, filename);
+    }
+
+    public void enviar(String to, String subject, String htmlBody) {
+        if (to == null || to.isBlank()) throw new RuntimeException("Indique el correo destino.");
         try {
-            JavaMailSenderImpl sender = createMailSender(config);
+            JavaMailSenderImpl sender = createSender();
             MimeMessage message = sender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(config.getSmtpUsername() != null && !config.getSmtpUsername().isBlank() ? config.getSmtpUsername().trim() : (config.getCorreoFrom() != null ? config.getCorreoFrom() : "noreply@clinisign.local"));
-            helper.setTo(to);
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+            helper.setFrom(systemFrom.trim());
+            helper.setTo(to.trim());
             helper.setSubject(subject);
             helper.setText(htmlBody, true);
+            sender.send(message);
+            log.info("Correo enviado a {} desde {}", to, systemFrom);
+        } catch (Exception e) {
+            log.error("SMTP error: {}", e.getMessage());
+            throw new RuntimeException("Error enviando correo: " + e.getMessage() +
+                    ". Verifique que la clave de aplicación de Gmail sea de 16 letras y que el usuario sea inforclinisign@gmail.com", e);
+        }
+    }
+
+    public void enviarConAdjunto(String to, String subject, String htmlBody, byte[] pdf, String filename) {
+        if (to == null || to.isBlank()) throw new RuntimeException("Indique el correo destino.");
+        try {
+            JavaMailSenderImpl sender = createSender();
+            MimeMessage message = sender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(systemFrom.trim());
+            helper.setTo(to.trim());
+            helper.setBcc(systemFrom.trim());
+            helper.setSubject(subject);
+            helper.setText(htmlBody, true);
+            log.info("Enviando a: {} | BCC: {} | Asunto: {}", to, systemFrom, subject);
             if (pdf != null && pdf.length > 0) {
                 helper.addAttachment(filename != null ? filename : "documento.pdf",
                         new org.springframework.core.io.ByteArrayResource(pdf));
             }
             sender.send(message);
+            log.info("PDF enviado a {} desde {}", to, systemFrom);
         } catch (Exception e) {
-            throw new RuntimeException("Error enviando correo: " + e.getMessage()
-                    + ". Use usuario y clave de aplicación del MISMO correo (Hotmail: smtp-mail.outlook.com / Gmail: smtp.gmail.com). El remitente debe ser ese usuario.", e);
+            log.error("SMTP PDF error: {}", e.getMessage());
+            throw new RuntimeException("Error enviando correo: " + e.getMessage() +
+                    ". Verifique la clave de aplicación de Gmail (16 letras, sin espacios).", e);
         }
     }
 }

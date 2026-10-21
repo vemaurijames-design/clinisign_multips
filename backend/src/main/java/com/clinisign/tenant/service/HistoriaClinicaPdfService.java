@@ -110,6 +110,8 @@ public class HistoriaClinicaPdfService {
             fila(doc, "Instrucción", txt(det, "instruccion"), "Resultado", txt(det, "resultado"), "Institución que recibe", n(hc.getDestinoPaciente()));
             fila(doc, "Complicaciones", txt(det, "complicaciones"), "CIE-10", n(hc.getCie10Principal()), "APH que registra", n(hc.getNombreProfesional()));
 
+            doc.add(new Paragraph("Autorizo el tratamiento de mis datos personales conforme a la Ley 1581 de 2012 para los fines de la atención en salud, facturación y archivo clínico.")
+                    .setFontSize(8).setMarginTop(6));
             addFirma(doc, "Firma del paciente  CC " + (p != null ? n(p.getDocumento()) : ""), hc.getFirmaPaciente());
             addFirma(doc, "Firma del acompañante  CC " + txt(det, "docAcompanante"), hc.getFirmaAcompanante());
             addFirma(doc, "Talento humano que traslada: " + n(hc.getNombreProfesional()), hc.getFirmaProfesional());
@@ -179,7 +181,7 @@ public class HistoriaClinicaPdfService {
     private String arr(JsonNode n, String k) {
         if (n == null || !n.has(k) || !n.get(k).isArray()) return "";
         StringBuilder sb = new StringBuilder();
-        n.get(k).forEach(x -> { if (sb.length() > 0) sb.append("; "); sb.append(x.asText()); });
+        n.get(k).forEach(x -> { if (!sb.isEmpty()) sb.append("; "); sb.append(x.asText()); });
         return sb.toString();
     }
 

@@ -1,15 +1,8 @@
-# Default ignored files
-/shelf/
-/workspace.xml
-
 # Backend
 backend/target/
 backend/uploads/
 backend/*.log
 backend/.idea/
-*.jar
-*.class
-*.war
 
 # Frontend
 frontend/node_modules/
@@ -27,5 +20,5 @@ frontend/.env.production
 .DS_Store
 Thumbs.db
 
-# Variables de entorno globales
-.env
+# Docker
+*.log
