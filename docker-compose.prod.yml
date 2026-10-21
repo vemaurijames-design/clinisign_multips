@@ -1,0 +1,59 @@
+services:
+  postgres:
+    image: postgres:15
+    restart: unless-stopped
+    command: postgres -c shared_buffers=64MB -c max_connections=50
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: clinisign_master
+    volumes:
+      - clinisign_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d clinisign_master"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    mem_limit: 640m
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m -XX:+UseSerialGC"
+      TZ: America/Bogota
+      SERVER_PORT: 8080
+      MASTER_DB_URL: jdbc:postgresql://postgres:5432/clinisign_master
+      MASTER_DB_USER: ${DB_USER}
+      MASTER_DB_PASSWORD: ${DB_PASSWORD}
+      PROVISIONING_DB_URL: jdbc:postgresql://postgres:5432/
+      PROVISIONING_DB_USER: ${DB_USER}
+      PROVISIONING_DB_PASSWORD: ${DB_PASSWORD}
+      TENANT_DB_HOST: postgres
+      TENANT_DB_PORT: 5432
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      CLINISIGN_MAIL_HOST: ${MAIL_HOST}
+      CLINISIGN_MAIL_PORT: ${MAIL_PORT}
+      CLINISIGN_MAIL_USERNAME: ${MAIL_USERNAME}
+      CLINISIGN_MAIL_PASSWORD: ${MAIL_PASSWORD}
+      CLINISIGN_MAIL_FROM: ${MAIL_FROM}
+    volumes:
+      - clinisign_uploads:/app/uploads
+      - clinisign_backups:/app/backups
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${APP_BIND}:${APP_PORT}:80"
+
+volumes:
+  clinisign_pg:
+  clinisign_uploads:
+  clinisign_backups:

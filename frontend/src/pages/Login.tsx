@@ -61,7 +61,7 @@ export default function Login() {
             <img
               src={String(ipsList.find((i: any) => String(i.id) === String(ipsId)).logoUrl).startsWith('http')
                 ? ipsList.find((i: any) => String(i.id) === String(ipsId)).logoUrl
-                : `http://localhost:8080${ipsList.find((i: any) => String(i.id) === String(ipsId)).logoUrl}`}
+                : `${ipsList.find((i: any) => String(i.id) === String(ipsId)).logoUrl}`}
               alt="Logo IPS"
               style={{ marginTop: 18, maxHeight: 64, maxWidth: 180, background: '#fff', padding: 8, borderRadius: 12 }}
             />
