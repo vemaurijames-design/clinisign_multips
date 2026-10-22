@@ -20,12 +20,12 @@ const OTROS = ['Monitoreo signos vitales','Lavado / Curación','Atención parto'
 
 function chips(list: string[], selected: string[], setSel: (v: string[]) => void) {
   return (
-    <div className="toolbar" style={{ flexWrap: 'wrap' }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
       {list.map(x => (
-        <label key={x} className="hint">
+        <label key={x} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', background: selected.includes(x) ? '#0b63c8' : '#f0f0f0', color: selected.includes(x) ? '#fff' : '#333', borderRadius: 16, fontSize: 13, cursor: 'pointer' }}>
           <input type="checkbox" checked={selected.includes(x)} onChange={e => {
             setSel(e.target.checked ? [...selected, x] : selected.filter(i => i !== x));
-          }} /> {x}
+          }} style={{ display: 'none' }} /> {x}
         </label>
       ))}
     </div>
@@ -93,7 +93,9 @@ function HCForm({ onSave, onCancel }: any) {
   const [form, setForm] = useState<any>({
     fechaAtencion: now.toISOString().slice(0, 10),
     horaAtencion: now.toTimeString().slice(0, 5),
-    horaDespacho: '', horaLlegada: '', horaSalida: '',
+    horaDespacho: now.toTimeString().slice(0, 5),
+    horaLlegada: now.toTimeString().slice(0, 5),
+    horaSalida: now.toTimeString().slice(0, 5),
     placaMovil: '', origen: '', destino1: '', destino2: '',
     tipoAtencion: 'Urgencia', conductor: '', tripulante: '',
     ta: '', fc: '', fr: '', temp: '', spo2: '', glasgow: '', glucometria: '',
@@ -188,48 +190,48 @@ function HCForm({ onSave, onCancel }: any) {
       )}
       {pac && (
         <div className="card">
-          <h4>2. Identificación del paciente (se carga al buscar)</h4>
+          <h4 style={{ background: '#edf2f7', color: '#1a365d', padding: '10px 16px', borderRadius: 6, marginTop: 20, fontWeight: 600 }}>2. Identificación del paciente (se carga al buscar)</h4>
           <p><strong>{pac.nombre} {pac.apellido}</strong></p>
           <p className="hint">Tipo {pac.tipoDocumento} · No. {pac.documento} · Edad {pac.edad} · Género {pac.genero}</p>
-          <p className="hint">Dir {pac.direccion} · Ciudad {pac.ciudad} · Tel {pac.telefono} · Nacimiento {pac.fechaNacimiento || '—'}</p>
+          <p className="hint">Dir {pac.direccion} · Ciudad {pac.ciudad} · Tel {pac.telefono} · Nacimiento {pac.fechaNacimiento ? new Date(pac.fechaNacimiento).toLocaleDateString() : '—'}</p>
           <p className="hint">Aseguramiento / EPS: {pac.eps} · Acompañante {pac.contactoNombre} {pac.contactoTelefono}</p>
           <p className="hint">Ocupación {pac.ocupacion || '—'} · Estado civil {pac.estadoCivil || '—'}</p>
         </div>
       )}
 
-      <h4>1. Información general</h4>
-      <div className="form-grid">
-        <input type="date" value={form.fechaAtencion} onChange={e => set('fechaAtencion', e.target.value)} />
+      <h4 style={{ background: '#1a365d', color: '#fff', padding: '10px 16px', borderRadius: 6, marginTop: 20, fontWeight: 600 }}>1. Información general</h4>
+      <div className="form-grid" style={{ gap: 16, marginBottom: 16 }}>
+        <label>Fecha de atención<input type="date" value={form.fechaAtencion} onChange={e => set('fechaAtencion', e.target.value)} /></label>
         <select value={form.placaMovil} onChange={e => set('placaMovil', e.target.value)}>
           <option value="">Placa móvil (ambulancias)</option>
           {moviles.map((a: any) => <option key={a.id} value={a.placa}>{a.placa} · {a.tipo} · {a.estado}</option>)}
         </select>
-        <input type="time" value={form.horaDespacho} onChange={e => set('horaDespacho', e.target.value)} />
-        <input type="time" value={form.horaLlegada} onChange={e => set('horaLlegada', e.target.value)} />
-        <input type="time" value={form.horaSalida} onChange={e => set('horaSalida', e.target.value)} />
-        <input placeholder="Origen" value={form.origen} onChange={e => set('origen', e.target.value)} />
-        <input placeholder="Destino 1" value={form.destino1} onChange={e => set('destino1', e.target.value)} />
-        <input placeholder="Destino 2 / final" value={form.destino2} onChange={e => set('destino2', e.target.value)} />
+        <label>Hora despacho<input type="time" value={form.horaDespacho} onChange={e => set('horaDespacho', e.target.value)} /></label>
+        <label>Hora llegada<input type="time" value={form.horaLlegada} onChange={e => set('horaLlegada', e.target.value)} /></label>
+        <label>Hora salida<input type="time" value={form.horaSalida} onChange={e => set('horaSalida', e.target.value)} /></label>
+        <label>Origen<input placeholder="Origen" value={form.origen} onChange={e => set('origen', e.target.value)} /></label>
+        <label>Destino 1<input placeholder="Destino 1" value={form.destino1} onChange={e => set('destino1', e.target.value)} /></label>
+        <label>Destino 2 / final<input placeholder="Destino 2 / final" value={form.destino2} onChange={e => set('destino2', e.target.value)} /></label>
         <div>
           {['Traslado','Emergencia','Urgencia','Consulta'].map(x => (
             <label key={x} className="hint"><input type="radio" name="clasif" checked={form.tipoAtencion===x} onChange={() => set('tipoAtencion', x)} /> {x}</label>
           ))}
         </div>
-        <input placeholder="Conductor" value={form.conductor} onChange={e => set('conductor', e.target.value)} />
-        <input placeholder="Tripulante / APH" value={form.tripulante} onChange={e => set('tripulante', e.target.value)} />
+        <label>Conductor<input placeholder="Conductor" value={form.conductor} onChange={e => set('conductor', e.target.value)} /></label>
+        <label>Tripulante / APH<input placeholder="Tripulante / APH" value={form.tripulante} onChange={e => set('tripulante', e.target.value)} /></label>
         <input placeholder="REG" value={form.registroProfesional} onChange={e => set('registroProfesional', e.target.value)} />
       </div>
 
-      <h4>3. Cuidados anteriores</h4>
+      <h4 style={{ background: '#edf2f7', color: '#1a365d', padding: '10px 16px', borderRadius: 6, marginTop: 20, fontWeight: 600 }}>3. Cuidados anteriores</h4>
       {chips(CUIDADOS, cuidados, setCuidados)}
-      <h4>4. Tipo de evento</h4>
+      <h4 style={{ background: '#edf2f7', color: '#1a365d', padding: '10px 16px', borderRadius: 6, marginTop: 20, fontWeight: 600 }}>4. Tipo de evento</h4>
       {chips(EVENTOS, eventos, setEventos)}
-      <h4>5.1 Urgencia médica</h4>
+      <h4 style={{ background: '#edf2f7', color: '#1a365d', padding: '10px 16px', borderRadius: 6, marginTop: 20, fontWeight: 600 }}>5.1 Urgencia médica</h4>
       {chips(MOT_MED, motMed, setMotMed)}
-      <h4>5.2 Urgencia traumática</h4>
+      <h4 style={{ background: '#edf2f7', color: '#1a365d', padding: '10px 16px', borderRadius: 6, marginTop: 20, fontWeight: 600 }}>5.2 Urgencia traumática</h4>
       {chips(MOT_TRA, motTra, setMotTra)}
 
-      <h4>6. Antecedentes</h4>
+      <h4 style={{ background: '#edf2f7', color: '#1a365d', padding: '10px 16px', borderRadius: 6, marginTop: 20, fontWeight: 600 }}>6. Antecedentes</h4>
       <div className="form-grid">
         <label>Patologías <select value={form.antecedentesPersonales} onChange={e => set('antecedentesPersonales', e.target.value)}><option>NO</option><option>SI</option></select></label>
         <label>Cirugías <select value={form.antecedentesQuirurgicos} onChange={e => set('antecedentesQuirurgicos', e.target.value)}><option>NO</option><option>SI</option></select></label>
@@ -242,7 +244,7 @@ function HCForm({ onSave, onCancel }: any) {
       <h4>Localización de lesiones</h4>
       {chips(LESIONES, lesiones, setLesiones)}
 
-      <h4>7. Examen físico (toma 1 y toma 2)</h4>
+      <h4 style={{ background: '#edf2f7', color: '#1a365d', padding: '10px 16px', borderRadius: 6, marginTop: 20, fontWeight: 600 }}>7. Examen físico (toma 1 y toma 2)</h4>
       <div className="form-grid">
         <input placeholder="TA" value={form.ta} onChange={e => set('ta', e.target.value)} />
         <input placeholder="FC" value={form.fc} onChange={e => set('fc', e.target.value)} />

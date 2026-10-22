@@ -80,16 +80,19 @@ function PacienteForm({ paciente, onSave, onCancel }: any) {
     <div className="card">
       <h3>{paciente ? 'Editar' : 'Nuevo'} paciente</h3>
       <div className="form-grid">
-        <input placeholder="Documento" value={form.documento} onChange={e => set('documento', e.target.value)} />
-        <input placeholder="Nombre" value={form.nombre} onChange={e => set('nombre', e.target.value)} />
-        <input placeholder="Apellido" value={form.apellido} onChange={e => set('apellido', e.target.value)} />
-        <input placeholder="Edad" type="number" value={form.edad} onChange={e => set('edad', e.target.value)} />
-        <input placeholder="Género" value={form.genero} onChange={e => set('genero', e.target.value)} />
-        <input placeholder="Teléfono" value={form.telefono} onChange={e => set('telefono', e.target.value)} />
-        <input placeholder="Dirección" value={form.direccion} onChange={e => set('direccion', e.target.value)} />
-        <input placeholder="Ciudad" value={form.ciudad} onChange={e => set('ciudad', e.target.value)} />
-        <input placeholder="EPS" value={form.eps} onChange={e => set('eps', e.target.value)} />
-        <input placeholder="RH" value={form.rh} onChange={e => set('rh', e.target.value)} />
+        <label>Documento *<input value={form.documento} onChange={e => set('documento', e.target.value)} /></label>
+        <label>Nombre *<input value={form.nombre} onChange={e => set('nombre', e.target.value)} /></label>
+        <label>Apellido *<input value={form.apellido} onChange={e => set('apellido', e.target.value)} /></label>
+        <label>Fecha de nacimiento<input type="date" value={form.fechaNacimiento || ''} onChange={e => set('fechaNacimiento', e.target.value)} /></label>
+        <label>Edad<input type="number" value={form.edad} onChange={e => set('edad', e.target.value)} /></label>
+        <label>Género<input value={form.genero} onChange={e => set('genero', e.target.value)} /></label>
+        <label>Teléfono<input value={form.telefono} onChange={e => set('telefono', e.target.value)} /></label>
+        <label>Dirección<input value={form.direccion} onChange={e => set('direccion', e.target.value)} /></label>
+        <label>Ciudad<input value={form.ciudad} onChange={e => set('ciudad', e.target.value)} /></label>
+        <label>EPS<input value={form.eps} onChange={e => set('eps', e.target.value)} /></label>
+        <label>RH<input value={form.rh} onChange={e => set('rh', e.target.value)} /></label>
+        <label>Ocupación<input value={form.ocupacion || ''} onChange={e => set('ocupacion', e.target.value)} /></label>
+        <label>Estado civil<input value={form.estadoCivil || ''} onChange={e => set('estadoCivil', e.target.value)} /></label>
         <input placeholder="Contacto" value={form.contactoNombre} onChange={e => set('contactoNombre', e.target.value)} />
         <input placeholder="Tel. contacto" value={form.contactoTelefono} onChange={e => set('contactoTelefono', e.target.value)} />
       </div>

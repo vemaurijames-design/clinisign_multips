@@ -18,31 +18,28 @@ export default function Notificaciones() {
         <button onClick={cargar}>Actualizar</button>
       </div>
       {msg && <div className="card">{msg}</div>}
-      <div className="table-wrap">
-        <table className="data-table">
-          <thead><tr><th>Fecha</th><th>Para</th><th>Título</th><th>Mensaje</th><th>Módulo</th><th></th></tr></thead>
-          <tbody>
-            {items.length === 0 && <tr><td colSpan={6}>Sin avisos. Cree una solicitud desde el radiooperador.</td></tr>}
-            {items.map((n: any) => (
-              <tr key={n.id}>
-                <td>{n.fechaCreacion ? new Date(n.fechaCreacion).toLocaleString() : ''}</td>
-                <td>{n.rolDestino}</td>
-                <td>{n.titulo}</td>
-                <td>{n.mensaje}</td>
-                <td>{n.modulo}</td>
-                <td>
-                  {!n.leida && (
-                    <button onClick={async () => {
-                      await notificacionService.leida(n.id);
-                      setMsg('Marcada como leída');
-                      cargar();
-                    }}>Marcar leída</button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {items.length === 0 && <div className="card">Sin avisos. Cree una solicitud desde el radiooperador.</div>}
+        {items.map((n: any) => (
+          <div key={n.id} style={{ padding: 12, background: n.leida ? '#f5f5f5' : '#e8f4fd', borderRadius: 8, borderLeft: `4px solid ${n.titulo?.includes('URGENTE') ? 'red' : '#0b63c8'}` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <strong style={{ color: '#0b63c8' }}>{n.titulo}</strong>
+              <span style={{ fontSize: 12, color: '#666' }}>{n.fechaCreacion ? new Date(n.fechaCreacion).toLocaleString() : ''}</span>
+            </div>
+            <p style={{ margin: '6px 0', fontSize: 14 }}>{n.mensaje}</p>
+            <div style={{ display: 'flex', gap: 12, fontSize: 12, color: '#666' }}>
+              <span>Para: {n.rolDestino}</span>
+              <span>Módulo: {n.modulo}</span>
+              {!n.leida && (
+                <button onClick={async () => {
+                  await notificacionService.leida(n.id);
+                  setMsg('Marcada como leída');
+                  cargar();
+                }} style={{ background: '#0b63c8', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: 4, cursor: 'pointer' }}>Marcar leída</button>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

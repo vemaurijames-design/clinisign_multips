@@ -1,3 +1,4 @@
+import api from '../services/api';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ipsService, superadminService } from '../services/rest';
@@ -37,7 +38,7 @@ export default function ListIps() {
   };
 
   const toggle = async (ips: any) => {
-    await ipsService.actualizar(ips.id, { ...ips, activo: !ips.activo });
+    await api.put(`/ips/${ips.id}`, { activo: !ips.activo });
     cargar();
   };
 

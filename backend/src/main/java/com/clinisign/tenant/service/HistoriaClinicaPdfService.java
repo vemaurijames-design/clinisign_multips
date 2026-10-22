@@ -81,6 +81,9 @@ public class HistoriaClinicaPdfService {
                 fila(doc, "Nombre", n(p.getNombre()) + " " + n(p.getApellido()), "Documento", n(p.getTipoDocumento()) + " " + n(p.getDocumento()), "Edad / sexo", String.valueOf(p.getEdad()) + " / " + n(p.getGenero()));
                 fila(doc, "Dirección", n(p.getDireccion()), "Municipio", n(p.getCiudad()), "Teléfono", n(p.getTelefono()));
                 fila(doc, "EPS / aseguramiento", n(p.getEps()), "Ocupación", n(p.getOcupacion()), "Estado civil", n(p.getEstadoCivil()));
+                if (p.getFechaNacimiento() != null) {
+                    doc.add(new Paragraph("Fecha de nacimiento: " + new java.text.SimpleDateFormat("dd/MM/yyyy").format(p.getFechaNacimiento())).setFontSize(9));
+                }
                 fila(doc, "Acompañante", n(p.getContactoNombre()), "Cédula acompañante", txt(det, "docAcompanante"), "Tel. acompañante", n(p.getContactoTelefono()));
             } else {
                 doc.add(new Paragraph("Paciente no asociado").setFontColor(ColorConstants.RED));
@@ -181,7 +184,7 @@ public class HistoriaClinicaPdfService {
     private String arr(JsonNode n, String k) {
         if (n == null || !n.has(k) || !n.get(k).isArray()) return "";
         StringBuilder sb = new StringBuilder();
-        n.get(k).forEach(x -> { if (!sb.isEmpty()) sb.append("; "); sb.append(x.asText()); });
+        n.get(k).forEach(x -> { if (sb.length() > 0) sb.append("; "); sb.append(x.asText()); });
         return sb.toString();
     }
 

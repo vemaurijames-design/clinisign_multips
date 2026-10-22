@@ -80,12 +80,12 @@ export default function Solicitudes() {
                 <td>{s.consecutivo}</td>
                 <td>{s.paciente?.nombre} {s.paciente?.apellido}<br /><span className="hint">{s.paciente?.documento}</span></td>
                 <td>{s.origen} → {s.destino}</td>
-                <td>{s.prioridad}</td>
-                <td>{s.estado}</td>
+                <td style={{ color: s.prioridad === 'URGENTE' ? 'red' : s.prioridad === 'ALTA' ? 'orange' : '#0b63c8', fontWeight: s.prioridad === 'URGENTE' ? 'bold' : 'normal' }}>{s.prioridad}</td>
+                <td style={{ color: s.estado === 'PENDIENTE' ? 'red' : s.estado === 'URGENTE' ? 'orange' : 'inherit', fontWeight: s.estado === 'PENDIENTE' ? 'bold' : 'normal' }}>{s.estado}</td>
                 <td>{s.ambulancia?.placa ?? '—'}</td>
                 <td>{s.asignadoA || '—'}</td>
                 <td>
-                  <button type="button" onClick={() => setDetalle(s)}>Ver detalle</button>
+                  <button type="button" onClick={() => setDetalle(s)} style={{ background: '#0b63c8', color: '#fff', border: 'none', padding: '6px 14px', borderRadius: 4, cursor: 'pointer' }}>Ver detalle</button>
                   {radio && s.estado === 'PENDIENTE' && (
                     <Asignar ambs={ambulancias} aphs={aphs} onOk={(amb, aphName) => asignar(s.id, amb, aphName)} />
                   )}
@@ -113,12 +113,12 @@ function Detalle({ s, onClose }: any) {
   return (
     <div className="card">
       <div className="page-head">
-        <h3>Detalle de la llamada {s.consecutivo}</h3>
+        <h3 style={{ color: '#0b63c8', borderBottom: '2px solid #0b63c8', paddingBottom: 8 }}>Detalle de la llamada {s.consecutivo}</h3>
         <button onClick={onClose}>Cerrar</button>
       </div>
       <p className="hint">Lo registró el radiooperador. El APH debe leerlo antes de salir.</p>
       <div className="form-grid">
-        <p><b>Estado:</b> {s.estado}</p>
+        <p style={{ background: s.estado === 'PENDIENTE' ? '#ffebee' : s.estado === 'COMPLETADA' ? '#e8f5e9' : '#fff3e0', padding: '8px 12px', borderRadius: 4 }}><b>Estado:</b> {s.estado}</p>
         <p><b>Prioridad:</b> {s.prioridad}</p>
         <p><b>Radio:</b> {s.radioperador || s.registradoPor || '—'}</p>
         <p><b>APH asignado:</b> {s.asignadoA || 'Sin asignar'}</p>
@@ -168,14 +168,21 @@ function Asignar({ ambs, aphs, onOk }: any) {
 }
 
 function Form({ pacientes, radioNombre, onSave, onCancel }: any) {
+  const [nuevoPac, setNuevoPac] = useState({ nombre: '', apellido: '', documento: '', telefono: '' });
+  const [crearNuevo, setCrearNuevo] = useState(false);
   const [form, setForm] = useState({
     pacienteId: '', origen: '', destino: '', ciudadOrigen: '', ciudadDestino: '',
     motivo: 'Traslado', prioridad: 'NORMAL', observaciones: '', radioperador: radioNombre,
     tipoDestino: 'IPS / centro médico',
   });
-  const guardar = () => {
+  const guardar = async () => {
+    let pacienteId = form.pacienteId;
+    if (crearNuevo && nuevoPac.documento) {
+      const r = await pacienteService.crear(nuevoPac);
+      pacienteId = r.data.id;
+    }
     const extra = `Destino tipo: ${form.tipoDestino}. ${form.observaciones || ''}`.trim();
-    onSave({ ...form, observaciones: extra });
+    onSave({ ...form, pacienteId, observaciones: extra });
   };
   return (
     <div className="card">
@@ -183,9 +190,18 @@ function Form({ pacientes, radioNombre, onSave, onCancel }: any) {
       <p className="hint">Escriba origen, destino e indicaciones. El auxiliar las verá en Ver detalle.</p>
       <div className="form-grid-2">
         <select value={form.pacienteId} onChange={e => setForm({ ...form, pacienteId: e.target.value })}>
-          <option value="">Paciente</option>
+          <option value="">Paciente existente</option>
           {pacientes.map((p: any) => <option key={p.id} value={p.id}>{p.nombre} {p.apellido} — {p.documento}</option>)}
         </select>
+        <label><input type="checkbox" checked={crearNuevo} onChange={e => setCrearNuevo(e.target.checked)} /> Crear paciente nuevo</label>
+        {crearNuevo && (
+          <>
+            <input placeholder="Nombre" value={nuevoPac.nombre} onChange={e => setNuevoPac({ ...nuevoPac, nombre: e.target.value })} />
+            <input placeholder="Apellido" value={nuevoPac.apellido} onChange={e => setNuevoPac({ ...nuevoPac, apellido: e.target.value })} />
+            <input placeholder="Documento" value={nuevoPac.documento} onChange={e => setNuevoPac({ ...nuevoPac, documento: e.target.value })} />
+            <input placeholder="Teléfono" value={nuevoPac.telefono} onChange={e => setNuevoPac({ ...nuevoPac, telefono: e.target.value })} />
+          </>
+        )}
         <input readOnly value={form.radioperador} />
         <input placeholder="Origen / recoger en" value={form.origen} onChange={e => setForm({ ...form, origen: e.target.value })} />
         <input placeholder="Destino / dejar en" value={form.destino} onChange={e => setForm({ ...form, destino: e.target.value })} />

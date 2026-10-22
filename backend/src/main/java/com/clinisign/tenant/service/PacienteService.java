@@ -63,6 +63,9 @@ public class PacienteService {
         if (body.containsKey("nombre")) p.setNombre(str(body.get("nombre")));
         if (body.containsKey("apellido")) p.setApellido(str(body.get("apellido")));
         if (body.containsKey("edad")) p.setEdad(toInt(body.get("edad")));
+        if (body.containsKey("fechaNacimiento") && body.get("fechaNacimiento") != null && !body.get("fechaNacimiento").toString().isBlank()) {
+            try { p.setFechaNacimiento(new java.text.SimpleDateFormat("yyyy-MM-dd").parse(body.get("fechaNacimiento").toString())); } catch (Exception ignored) {}
+        }
         if (body.containsKey("genero")) p.setGenero(str(body.get("genero")));
         if (body.containsKey("direccion")) p.setDireccion(str(body.get("direccion")));
         if (body.containsKey("telefono")) p.setTelefono(str(body.get("telefono")));
@@ -91,7 +94,7 @@ public class PacienteService {
     public byte[] exportarExcel() throws Exception {
         Workbook wb = new XSSFWorkbook();
         Sheet sheet = wb.createSheet("Pacientes");
-        String[] headers = {"Doc", "Nombre", "Apellido", "Edad", "Genero", "Telefono", "Ciudad", "EPS", "RH", "Direccion"};
+        String[] headers = {"Doc", "Nombre", "Apellido", "FechaNacimiento", "Edad", "Genero", "Telefono", "Ciudad", "EPS", "RH", "Direccion", "Ocupacion", "EstadoCivil"};
         Row header = sheet.createRow(0);
         CellStyle style = wb.createCellStyle();
         Font font = wb.createFont();
@@ -108,13 +111,16 @@ public class PacienteService {
             r.createCell(0).setCellValue(nz(p.getDocumento()));
             r.createCell(1).setCellValue(nz(p.getNombre()));
             r.createCell(2).setCellValue(nz(p.getApellido()));
-            r.createCell(3).setCellValue(p.getEdad() != null ? p.getEdad() : 0);
-            r.createCell(4).setCellValue(nz(p.getGenero()));
-            r.createCell(5).setCellValue(nz(p.getTelefono()));
-            r.createCell(6).setCellValue(nz(p.getCiudad()));
-            r.createCell(7).setCellValue(nz(p.getEps()));
-            r.createCell(8).setCellValue(nz(p.getRh()));
-            r.createCell(9).setCellValue(nz(p.getDireccion()));
+            r.createCell(3).setCellValue(p.getFechaNacimiento() != null ? new java.text.SimpleDateFormat("yyyy-MM-dd").format(p.getFechaNacimiento()) : "");
+            r.createCell(4).setCellValue(p.getEdad() != null ? p.getEdad() : 0);
+            r.createCell(5).setCellValue(nz(p.getGenero()));
+            r.createCell(6).setCellValue(nz(p.getTelefono()));
+            r.createCell(7).setCellValue(nz(p.getCiudad()));
+            r.createCell(8).setCellValue(nz(p.getEps()));
+            r.createCell(9).setCellValue(nz(p.getRh()));
+            r.createCell(10).setCellValue(nz(p.getDireccion()));
+            r.createCell(11).setCellValue(nz(p.getOcupacion()));
+            r.createCell(12).setCellValue(nz(p.getEstadoCivil()));
         }
         for (int i = 0; i < headers.length; i++) sheet.autoSizeColumn(i);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -136,14 +142,20 @@ public class PacienteService {
                 p.setDocumento(doc);
                 p.setNombre(getVal(row, 1));
                 p.setApellido(getVal(row, 2));
-                String edad = getVal(row, 3);
+                String fecha = getVal(row, 3);
+                if (fecha != null && !fecha.isBlank()) {
+                    try { p.setFechaNacimiento(new java.text.SimpleDateFormat("yyyy-MM-dd").parse(fecha)); } catch (Exception ignored) {}
+                }
+                String edad = getVal(row, 4);
                 if (edad != null && !edad.isBlank()) p.setEdad(Integer.valueOf(edad.replace(".0", "")));
-                p.setGenero(getVal(row, 4));
-                p.setTelefono(getVal(row, 5));
-                p.setCiudad(getVal(row, 6));
-                p.setEps(getVal(row, 7));
-                p.setRh(getVal(row, 8));
-                p.setDireccion(getVal(row, 9));
+                p.setGenero(getVal(row, 5));
+                p.setTelefono(getVal(row, 6));
+                p.setCiudad(getVal(row, 7));
+                p.setEps(getVal(row, 8));
+                p.setRh(getVal(row, 9));
+                p.setDireccion(getVal(row, 10));
+                p.setOcupacion(getVal(row, 11));
+                p.setEstadoCivil(getVal(row, 12));
                 repo.save(p);
                 count++;
             }

@@ -86,25 +86,36 @@ export default function Dashboard() {
         {showNotis && <>
         {(notis || []).length === 0 && <p className="hint">Sin notificaciones nuevas en esta IPS.</p>}
         {(notis || []).slice(0, 8).map((n: any) => (
-          <p key={n.id}><strong>{n.titulo || 'Aviso'}</strong>: {n.mensaje}</p>
+          <div key={n.id} style={{ padding: '8px 12px', marginBottom: 6, background: '#e8f4fd', borderRadius: 6, borderLeft: '3px solid #0b63c8' }}>
+            <strong style={{ color: '#0b63c8' }}>{n.titulo || 'Aviso'}</strong>
+            <p style={{ margin: '4px 0 0', fontSize: 13 }}>{n.mensaje}</p>
+          </div>
         ))}
         <h4>Solicitudes activas</h4>
         {(sols || []).length === 0 && <p className="hint">No hay solicitudes pendientes o en curso.</p>}
         {(sols || []).slice(0, 8).map((s: any) => (
-          <p key={s.id} className="hint">{s.tipo || s.prioridad || 'Solicitud'} · {s.estado} · {s.direccionOrigen || s.origen || ''} <Link to="/solicitudes">abrir</Link></p>
+          <p key={s.id} style={{ padding: '6px 10px', marginBottom: 4, background: s.prioridad === 'URGENTE' ? '#ffebee' : s.prioridad === 'ALTA' ? '#fff3e0' : '#f5f5f5', borderRadius: 4, borderLeft: `3px solid ${s.prioridad === 'URGENTE' ? 'red' : s.prioridad === 'ALTA' ? 'orange' : '#0b63c8'}` }}>
+            <span style={{ color: s.prioridad === 'URGENTE' ? 'red' : s.prioridad === 'ALTA' ? 'orange' : '#333', fontWeight: s.prioridad === 'URGENTE' ? 'bold' : 'normal' }}>{s.prioridad || 'NORMAL'}</span>
+            · {s.estado} · {s.direccionOrigen || s.origen || ''}
+            <Link to="/solicitudes" style={{ background: '#0b63c8', color: '#fff', padding: '4px 12px', borderRadius: 4, textDecoration: 'none', fontSize: 12, marginLeft: 8 }}>Abrir</Link>
+          </p>
         ))}
       </>}
       </div>
       <div className="grid-stats">
-        {cards.map(([k, label]) => {
+        {cards.map(([k, label], i) => {
           const val = Number(stats[k] ?? agenda[k] ?? 0);
+          const colors = ['#0b63c8', '#1a9f5c', '#e67e22', '#8e44ad', '#c0392b', '#2980b9'];
+          const color = colors[i % colors.length];
+          const pct = Math.round((val / max) * 100);
           return (
-            <div className="card-stat" key={k}>
-              <h3>{stats[k] ?? agenda[k] ?? 0}</h3>
+            <div className="card-stat" key={k} style={{ borderLeft: `4px solid ${color}` }}>
+              <h3 style={{ color }}>{val}</h3>
               <p>{label}</p>
-              <div style={{ height: 8, background: '#e6eef8', borderRadius: 8, marginTop: 8 }}>
-                <div style={{ width: `${Math.round((val / max) * 100)}%`, height: 8, background: '#0b63c8', borderRadius: 8 }} />
+              <div style={{ height: 10, background: '#e6eef8', borderRadius: 6, marginTop: 10 }}>
+                <div style={{ width: `${pct}%`, height: 10, background: color, borderRadius: 6, transition: 'width .3s' }} />
               </div>
+              <small className="hint">{pct}% del máximo</small>
             </div>
           );
         })}
