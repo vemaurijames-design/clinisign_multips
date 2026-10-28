@@ -36,7 +36,8 @@ public class TenantSchemaFixer implements ApplicationRunner {
                 "ALTER TABLE consentimientos ADD COLUMN IF NOT EXISTS firma_profesional TEXT",
                 "ALTER TABLE consentimientos ADD COLUMN IF NOT EXISTS cedula_auxiliar VARCHAR(50)",
                 "ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS parentesco_acompanante VARCHAR(100)",
-                "ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS doc_acompanante VARCHAR(50)"
+                "ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS doc_acompanante VARCHAR(50)",
+                "ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS apoyo VARCHAR(100)"
         };
         try (var conn = dataSourceManager.getDataSource(ipsId).getConnection()) {
             for (String sql : columns) {
