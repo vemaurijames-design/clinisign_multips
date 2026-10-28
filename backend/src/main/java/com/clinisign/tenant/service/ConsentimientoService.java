@@ -86,11 +86,15 @@ public class ConsentimientoService {
         }
         c.setHuellaDigital(str(body.get("huellaDigital")));
         c.setNombreAcompanante(str(body.get("nombreAcompanante")));
+        c.setDocumentoAcompanante(str(body.get("documentoAcompanante")));
+        c.setParentescoAcompanante(str(body.get("parentescoAcompanante")));
         c.setNombreAuxiliar(str(body.get("nombreAuxiliar")));
         if (!notBlank(c.getNombreAuxiliar())) {
             c.setNombreAuxiliar(ActorContext.nombre() != null ? ActorContext.nombre() : ActorContext.email());
         }
         c.setRegistroAuxiliar(str(body.get("registroAuxiliar")));
+        c.setDocumentoAuxiliar(str(body.get("documentoAuxiliar")));
+        c.setFirmaProfesional(str(body.get("firmaProfesional")));
         c.setRegistradoPor(ActorContext.etiqueta());
         String tipoNum = c.getTipo() != null ? c.getTipo() : "CONSENTIMIENTO";
         try {
@@ -169,7 +173,22 @@ public class ConsentimientoService {
         return repo.save(c);
     }
 
-    public void eliminar(Long id) { repo.deleteById(id); }
+    public void activar(Long id) {
+        Consentimiento cons = repo.findById(id).orElseThrow(() -> new RuntimeException("No encontrado"));
+        cons.setActivo(true);
+        repo.save(cons);
+        auditoria.registrar("CONSENTIMIENTO", "ACTIVAR", id, ActorContext.etiqueta());
+    }
+    public void eliminar(Long id) {
+        Consentimiento cons = repo.findById(id).orElseThrow(() -> new RuntimeException("No encontrado"));
+        cons.setActivo(false);
+        repo.save(cons);
+        try {
+            auditoria.registrar("CONSENTIMIENTO", "ANULAR", id, ActorContext.etiqueta());
+        } catch (Exception e) {
+            log.warn("No se pudo registrar auditoría: {}", e.getMessage());
+        }
+    }
     private String str(Object o) { return o == null ? null : o.toString(); }
     private boolean notBlank(Object o) { return o != null && !o.toString().isBlank(); }
 }

@@ -15,6 +15,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 @Component
 @RequiredArgsConstructor
@@ -34,7 +35,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         Claims claims = jwtService.extractClaims(token);
         String email = claims.getSubject();
-        String rol = claims.get("rol", String.class);
+        String rol = normalizarRol(claims.get("rol", String.class));
         Object ipsIdObj = claims.get("ipsId");
         Long ipsId = ipsIdObj != null ? Long.valueOf(ipsIdObj.toString()) : null;
         if (ipsId != null) {
@@ -47,6 +48,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authToken);
         filterChain.doFilter(request, response);
+    }
+
+    /**
+     * Accepts role claims stored as RADIOPERADOR, radiooperador,
+     * ROLE_RADIOPERADOR, or even ROLE_ROLE_RADIOPERADOR, and emits one
+     * canonical role name. This does not grant a new role; it only removes
+     * presentation prefixes and normalizes casing/whitespace.
+     */
+    private String normalizarRol(String rol) {
+        if (rol == null) return "null";
+        String normalizado = rol.trim().toUpperCase(Locale.ROOT);
+        while (normalizado.startsWith("ROLE_")) {
+            normalizado = normalizado.substring("ROLE_".length());
+        }
+        return normalizado;
     }
 
     private String resolveToken(HttpServletRequest request) {

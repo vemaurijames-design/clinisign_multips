@@ -26,21 +26,21 @@ function AppRoutes() {
   return (
     <Layout>
       <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/agenda" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','AUXILIAR','RADIOPERADOR']}><RequireIps><Agenda /></RequireIps></PrivateRoute>} />
-        <Route path="/pacientes" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','AUXILIAR','RADIOPERADOR']}><RequireIps><Pacientes /></RequireIps></PrivateRoute>} />
-        <Route path="/usuarios" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS']}><Usuarios /></PrivateRoute>} />
+        <Route path="/" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','AUXILIAR','RADIOPERADOR','TECNICO','CALIDAD','MEDICO']}><Dashboard /></PrivateRoute>} />
+        <Route path="/agenda" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','AUXILIAR','RADIOPERADOR','MEDICO']}><RequireIps><Agenda /></RequireIps></PrivateRoute>} />
+        <Route path="/pacientes" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','AUXILIAR','RADIOPERADOR','MEDICO']}><RequireIps><Pacientes /></RequireIps></PrivateRoute>} />
+        <Route path="/usuarios" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','RADIOPERADOR']}><Usuarios /></PrivateRoute>} />
         <Route path="/ambulancias" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','TECNICO','RADIOPERADOR']}><RequireIps><Ambulancias /></RequireIps></PrivateRoute>} />
-        <Route path="/solicitudes" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','RADIOPERADOR','AUXILIAR']}><RequireIps><Solicitudes /></RequireIps></PrivateRoute>} />
-        <Route path="/historias-clinicas" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','AUXILIAR']}><RequireIps><HistoriaClinica /></RequireIps></PrivateRoute>} />
-        <Route path="/consentimientos" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','AUXILIAR']}><RequireIps><Consentimientos /></RequireIps></PrivateRoute>} />
-        <Route path="/reportes" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','CALIDAD']}><RequireIps><Reportes /></RequireIps></PrivateRoute>} />
+        <Route path="/solicitudes" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','RADIOPERADOR','AUXILIAR','MEDICO']}><RequireIps><Solicitudes /></RequireIps></PrivateRoute>} />
+        <Route path="/historias-clinicas" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','AUXILIAR','MEDICO','RADIOPERADOR','CALIDAD']}><RequireIps><HistoriaClinica /></RequireIps></PrivateRoute>} />
+        <Route path="/consentimientos" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','AUXILIAR','MEDICO','RADIOPERADOR','CALIDAD']}><RequireIps><Consentimientos /></RequireIps></PrivateRoute>} />
+        <Route path="/reportes" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','CALIDAD','RADIOPERADOR']}><RequireIps><Reportes /></RequireIps></PrivateRoute>} />
         <Route path="/ips" element={<PrivateRoute roles={['SUPERADMIN']}><ListIps /></PrivateRoute>} />
         <Route path="/ips/create" element={<PrivateRoute roles={['SUPERADMIN']}><CreateIps /></PrivateRoute>} />
-        <Route path="/config" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS']}><RequireIps><ConfigCorreo /></RequireIps></PrivateRoute>} />
-        <Route path="/auditoria" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','CALIDAD']}><RequireIps><Auditoria /></RequireIps></PrivateRoute>} />
+        <Route path="/config" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','MEDICO']}><RequireIps><ConfigCorreo /></RequireIps></PrivateRoute>} />
+        <Route path="/auditoria" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','CALIDAD','MEDICO','RADIOPERADOR']}><RequireIps><Auditoria /></RequireIps></PrivateRoute>} />
         <Route path="/plantillas" element={<PrivateRoute roles={['SUPERADMIN']}><RequireIps><Plantillas /></RequireIps></PrivateRoute>} />
-        <Route path="/notificaciones" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','AUXILIAR','RADIOPERADOR','TECNICO','CALIDAD']}><RequireIps><Notificaciones /></RequireIps></PrivateRoute>} />
+        <Route path="/notificaciones" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','AUXILIAR','RADIOPERADOR','TECNICO','CALIDAD','MEDICO']}><RequireIps><Notificaciones /></RequireIps></PrivateRoute>} />
       </Routes>
     </Layout>
   );

@@ -20,7 +20,7 @@ public class PacienteService {
     private final PacienteRepository repo;
     private final AuditoriaService auditoria;
 
-    public List<Paciente> listar() { return repo.findAll(); }
+    public List<Paciente> listar() { return repo.findAll().stream().filter(p -> p.getActivo() == null || p.getActivo()).toList(); }
     public Paciente obtener(Long id) { return repo.findById(id).orElseThrow(); }
 
     public List<Paciente> buscar(String q) {
@@ -52,9 +52,18 @@ public class PacienteService {
         auditoria.registrar("PACIENTES", "EDITAR", p.getId(), p.getDocumento());
         return p;
     }
+    public void activar(Long id) {
+        Paciente pac = repo.findById(id).orElseThrow(() -> new RuntimeException("No encontrado"));
+        pac.setActivo(true);
+        repo.save(pac);
+        auditoria.registrar("PACIENTE", "ACTIVAR", id, ActorContext.etiqueta());
+    }
     public void eliminar(Long id) {
         auditoria.registrar("PACIENTES", "ELIMINAR", id, "paciente");
-        repo.deleteById(id);
+        Paciente pac = repo.findById(id).orElseThrow(() -> new RuntimeException("No encontrado"));
+        pac.setActivo(false);
+        repo.save(pac);
+        auditoria.registrar("PACIENTE", "ANULAR", id, ActorContext.etiqueta());
     }
 
     private void mapear(Paciente p, Map<String, Object> body) {

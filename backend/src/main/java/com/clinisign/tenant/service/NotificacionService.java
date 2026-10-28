@@ -15,7 +15,7 @@ public class NotificacionService {
     public List<Notificacion> listar(String rol) {
         try {
             List<Notificacion> list;
-            if (rol == null || rol.isBlank() || "SUPERADMIN".equals(rol) || "ADMINIPS".equals(rol)) {
+            if (rol == null || rol.isBlank() || "SUPERADMIN".equals(rol) || "ADMINIPS".equals(rol) || "RADIOPERADOR".equals(rol)) {
                 list = repo.findTop30ByOrderByFechaCreacionDesc();
             } else {
                 list = repo.findTop30ByRolDestinoOrderByFechaCreacionDesc(rol);

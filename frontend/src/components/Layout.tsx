@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { historiaClinicaService, consentimientoService } from '../services/rest';
 import { useAuth } from '../context/AuthContext';
 import { ipsService, notificacionService } from '../services/rest';
 import Sidebar from './Sidebar';
@@ -9,6 +10,33 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [ipsList, setIpsList] = useState<any[]>([]);
   const [notis, setNotis] = useState<any[]>([]);
   const [showNotis, setShowNotis] = useState(false);
+
+  useEffect(() => {
+    const retryPending = async () => {
+      const keys = Object.keys(localStorage).filter(k => k.startsWith('hc_pending_') || k.startsWith('consent_pending_'));
+      if (keys.length === 0) return;
+      for (const key of keys) {
+        try {
+          const draft = JSON.parse(localStorage.getItem(key) || '{}');
+          if (key.startsWith('hc_pending_') && draft.form && draft.pacId) {
+            await historiaClinicaService.crear({ ...draft.form, pacienteId: draft.pacId });
+            localStorage.removeItem(key);
+            alert('Historia clínica pendiente enviada a CliniSign. Revise el módulo de historias.');
+          }
+          if (key.startsWith('consent_pending_') && draft.pac) {
+            await consentimientoService.crear(draft);
+            localStorage.removeItem(key);
+            alert('Consentimiento pendiente enviado a CliniSign. Revise el módulo de consentimientos.');
+          }
+        } catch (e) {
+          console.warn('No se pudo enviar pendiente:', key);
+        }
+      }
+    };
+    window.addEventListener('online', retryPending);
+    retryPending();
+    return () => window.removeEventListener('online', retryPending);
+  }, []);
 
   useEffect(() => {
     if (rol === 'SUPERADMIN') {
@@ -36,12 +64,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {open && <div className="overlay" onClick={() => setOpen(false)} />}
       <div className="content">
         <nav className="navbar">
-          <div className="navbar-left">
+          <div className="navbar-left" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button className="menu-btn btn-ghost" onClick={() => setOpen(v => !v)}>☰</button>
-            <strong>CliniSign</strong>
+
+            {/* ICONO Y TEXTO EN LA BARRA SUPERIOR */}
+            <img src="/logo-clinisign.png" alt="Icon" style={{ height: '28px', width: '28px', objectFit: 'cover', borderRadius: '5px' }} />
+            <strong style={{ fontSize: '18px' }}>CliniSign</strong>
+
             {ipsList.find((i: any) => String(i.id) === String(ipsId))?.logoUrl && (
-              <img src={ipsList.find((i: any) => String(i.id) === String(ipsId)).logoUrl} alt="" style={{ height: 28, borderRadius: 6, background: '#fff' }} />
+              <img src={ipsList.find((i: any) => String(i.id) === String(ipsId)).logoUrl} alt="" style={{ height: 28, borderRadius: 6, background: '#fff', marginLeft: '10px' }} />
             )}
+
             {rol === 'SUPERADMIN' ? (
               <select
                 value={ipsId && ipsId !== 'null' ? ipsId : ''}
@@ -49,7 +82,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   const found = ipsList.find((i: any) => String(i.id) === e.target.value);
                   if (found) seleccionarIps(String(found.id), found.nombre);
                 }}
-                style={{ maxWidth: 260 }}
+                style={{ maxWidth: 260, marginLeft: '10px' }}
               >
                 <option value="">Seleccionar IPS de trabajo</option>
                 {ipsList.map((ips: any) => (
@@ -57,7 +90,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 ))}
               </select>
             ) : (
-              ipsNombre && <span>{ipsNombre}</span>
+              ipsNombre && <span style={{ marginLeft: '10px' }}>{ipsNombre}</span>
             )}
           </div>
           <div className="navbar-right">

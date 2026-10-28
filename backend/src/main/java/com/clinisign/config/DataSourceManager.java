@@ -126,6 +126,21 @@ public class DataSourceManager {
                 ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS detalle_json TEXT;
                 ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS firma_paciente TEXT;
                 ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS firma_acompanante TEXT;
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS consecutivo INTEGER;
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS ta_entrega VARCHAR(50);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS fc_entrega VARCHAR(50);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS fr_entrega VARCHAR(50);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS spo2_entrega VARCHAR(50);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS temp_entrega VARCHAR(50);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS gluc_entrega VARCHAR(50);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS glasgow_entrega VARCHAR(50);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS nombre_entrega VARCHAR(250);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS cedula_entrega VARCHAR(50);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS nombre_receptor VARCHAR(250);
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS cedula_receptor VARCHAR(50);
+                ALTER TABLE pacientes ADD COLUMN IF NOT EXISTS activo BOOLEAN DEFAULT true;
+                ALTER TABLE consentimientos ADD COLUMN IF NOT EXISTS activo BOOLEAN DEFAULT true;
+                ALTER TABLE historias_clinicas ADD COLUMN IF NOT EXISTS activo BOOLEAN DEFAULT true;
                 CREATE TABLE IF NOT EXISTS notificaciones (
                     id BIGSERIAL PRIMARY KEY,
                     rol_destino VARCHAR(50),
@@ -275,7 +290,7 @@ public class DataSourceManager {
     }
 
     private void insertRoles(Connection conn) throws Exception {
-        String[] roles = {"ADMINIPS", "AUXILIAR", "RADIOPERADOR", "TECNICO", "CALIDAD"};
+        String[] roles = {"ADMINIPS", "AUXILIAR", "RADIOPERADOR", "TECNICO", "CALIDAD", "MEDICO"};
         for (String rol : roles) {
             try (PreparedStatement ps = conn.prepareStatement(
                     "INSERT INTO roles (nombre) VALUES (?) ON CONFLICT (nombre) DO NOTHING")) {

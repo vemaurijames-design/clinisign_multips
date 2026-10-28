@@ -41,7 +41,7 @@ public class UsuarioController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminar(@PathVariable Long id) {
-        permiso.requerirEdicion();
+        permiso.requerirRoles("SUPERADMIN");
         service.eliminar(id);
         return ResponseEntity.ok().build();
     }

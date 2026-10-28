@@ -15,19 +15,26 @@ import java.util.Map;
 @RequestMapping("/api/consentimientos")
 @RequiredArgsConstructor
 public class ConsentimientoController {
+
     private final ConsentimientoService service;
     private final ConsentimientoPdfService pdfService;
     private final PermisoUtil permiso;
 
     @GetMapping
-    public ResponseEntity<?> listar() { return ResponseEntity.ok(service.listar()); }
+    public ResponseEntity<?> listar() {
+        return ResponseEntity.ok(service.listar());
+    }
 
     @GetMapping("/documento/{documento}")
     public ResponseEntity<?> porDocumento(@PathVariable String documento) {
         return ResponseEntity.ok(service.porDocumento(documento));
     }
+
     @PostMapping
-    public ResponseEntity<?> crear(@RequestBody Map<String, Object> b) { return ResponseEntity.ok(service.crear(b)); }
+    public ResponseEntity<?> crear(@RequestBody Map<String, Object> b) {
+        return ResponseEntity.ok(service.crear(b));
+    }
+
     @GetMapping("/{id}/pdf")
     public ResponseEntity<byte[]> descargarPdf(@PathVariable Long id) {
         return ResponseEntity.ok()
@@ -35,15 +42,23 @@ public class ConsentimientoController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdfService.generarPdf(id));
     }
+
     @PostMapping("/{id}/enviar")
     public ResponseEntity<?> enviar(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> b) {
         String destino = b != null && b.get("correoDestino") != null ? b.get("correoDestino").toString() : null;
         return ResponseEntity.ok(service.enviarCorreo(id, destino));
     }
 
+    @PutMapping("/{id}/activar")
+    public ResponseEntity<?> activar(@PathVariable Long id) {
+        permiso.requerirRoles("SUPERADMIN", "ADMINIPS", "RADIOPERADOR");
+        service.activar(id);
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminar(@PathVariable Long id) {
-        permiso.requerirEdicion();
+        permiso.requerirRoles("SUPERADMIN", "ADMINIPS", "RADIOPERADOR");
         service.eliminar(id);
         return ResponseEntity.ok().build();
     }

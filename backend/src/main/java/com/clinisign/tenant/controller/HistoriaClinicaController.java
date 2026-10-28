@@ -38,12 +38,18 @@ public class HistoriaClinicaController {
     public ResponseEntity<?> crear(@RequestBody Map<String, Object> b) { return ResponseEntity.ok(service.crear(b)); }
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizar(@PathVariable Long id, @RequestBody Map<String, Object> b) {
-        permiso.requerirSuperadmin();
+        permiso.requerirRoles("SUPERADMIN", "ADMINIPS", "RADIOPERADOR");
         return ResponseEntity.ok(service.actualizar(id, b));
+    }
+    @PutMapping("/{id}/activar")
+    public ResponseEntity<?> activar(@PathVariable Long id) {
+        permiso.requerirRoles("SUPERADMIN", "ADMINIPS", "RADIOPERADOR");
+        service.activar(id);
+        return ResponseEntity.ok().build();
     }
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminar(@PathVariable Long id) {
-        permiso.requerirSuperadmin();
+        permiso.requerirRoles("SUPERADMIN", "ADMINIPS", "RADIOPERADOR");
         service.eliminar(id);
         return ResponseEntity.ok().build();
     }

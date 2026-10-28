@@ -75,12 +75,13 @@ public class SolicitudService {
             s.setHoraAsignacion(new Date());
             a.setEstado("EN_SERVICIO");
             ambRepo.save(a);
-            aviso("AUXILIAR", "Traslado asignado a usted",
-                    (s.getAsignadoA() != null ? s.getAsignadoA() + ". " : "")
-                            + s.getConsecutivo() + " móvil " + a.getPlaca()
-                            + ". Paciente " + nombrePac(s)
-                            + ". Recoger en " + s.getOrigen() + " y dejar en " + s.getDestino()
-                            + ". Prioridad " + s.getPrioridad() + ".");
+            String msg = (s.getAsignadoA() != null ? s.getAsignadoA() + ". " : "")
+                    + s.getConsecutivo() + " móvil " + a.getPlaca()
+                    + ". Paciente " + nombrePac(s)
+                    + ". Recoger en " + s.getOrigen() + " y dejar en " + s.getDestino()
+                    + ". Prioridad " + s.getPrioridad() + ".";
+            aviso("AUXILIAR", "Traslado asignado a usted", msg);
+            aviso("MEDICO", "Traslado asignado a usted", msg);
             aviso("RADIOPERADOR", "Servicio asignado", s.getConsecutivo() + " → " + a.getPlaca() + " / " + s.getAsignadoA());
         }
         if (body.containsKey("estado")) {

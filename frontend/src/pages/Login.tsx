@@ -10,6 +10,7 @@ export default function Login() {
   const [modo, setModo] = useState<'superadmin' | 'ips'>('ips');
   const [ipsList, setIpsList] = useState<any[]>([]);
   const [ipsId, setIpsId] = useState('');
+  const [nitInput, setNitInput] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -20,16 +21,18 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (modo === 'ips' && !ipsId) {
-      setError('Seleccione su IPS para continuar.');
+    if (modo === 'ips' && !nitInput) {
+      setError('Ingrese el NIT de su IPS.');
       return;
     }
     setLoading(true);
     try {
+      const ipsFound = ipsList.find((i: any) => i.nit?.replace(/[^0-9]/g, '') === nitInput.replace(/[^0-9]/g, ''));
+      if (modo === 'ips' && !ipsFound) { setError('Credenciales inválidas'); setLoading(false); return; }
       const resp = await authService.login({
         email,
         password,
-        ipsId: modo === 'superadmin' ? null : (ipsId ? Number(ipsId) : null),
+        ipsId: modo === 'superadmin' ? null : (ipsFound?.id ?? null),
       });
       if (resp.rol !== 'SUPERADMIN' && !resp.ipsId) {
         setError('Este usuario no está registrado en una IPS por el SUPERADMIN.');
@@ -42,7 +45,7 @@ export default function Login() {
     } catch (err: any) {
       const raw = err.response?.data?.message || '';
       if (modo === 'ips') {
-        setError('No pudimos validar esas credenciales en la IPS. Revise el correo (en SIAN es @hotmail.com, no Gmail), la contraseña y que haya elegido la IPS correcta.');
+        setError('Credenciales inválidas. Verifique el correo, la contraseña y el NIT. Si la cuenta está inactiva, contacte al administrador de CliniSign.');
       } else {
         setError(raw || 'Credenciales de SUPERADMIN no válidas.');
       }
@@ -61,7 +64,7 @@ export default function Login() {
             <img
               src={String(ipsList.find((i: any) => String(i.id) === String(ipsId)).logoUrl).startsWith('http')
                 ? ipsList.find((i: any) => String(i.id) === String(ipsId)).logoUrl
-                : `${ipsList.find((i: any) => String(i.id) === String(ipsId)).logoUrl}`}
+                : `http://localhost:8080${ipsList.find((i: any) => String(i.id) === String(ipsId)).logoUrl}`}
               alt="Logo IPS"
               style={{ marginTop: 18, maxHeight: 64, maxWidth: 180, background: '#fff', padding: 8, borderRadius: 12 }}
             />
@@ -89,13 +92,8 @@ export default function Login() {
             </select>
             {modo === 'ips' && (
               <>
-                <label className="login-label">Su institución</label>
-                <select value={ipsId} onChange={e => setIpsId(e.target.value)} required>
-                  <option value="">Seleccione su IPS</option>
-                  {ipsList.map((ips: any) => (
-                    <option key={ips.id} value={ips.id}>{ips.nombre} (NIT {ips.nit})</option>
-                  ))}
-                </select>
+                <label className="login-label">NIT de su IPS (sin dígito de verificación)</label>
+                <input placeholder="Ej: 901806509" value={nitInput} onChange={e => setNitInput(e.target.value)} required />
               </>
             )}
             <label className="login-label">Correo</label>

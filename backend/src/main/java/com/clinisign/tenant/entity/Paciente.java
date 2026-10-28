@@ -52,6 +52,8 @@ public class Paciente {
     @Column(name = "fecha_creacion")
     private Date fechaCreacion;
 
+    private Boolean activo = true;
+
     @PrePersist
     void prePersist() {
         if (fechaCreacion == null) fechaCreacion = new Date();

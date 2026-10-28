@@ -10,7 +10,7 @@ function fecha(v: any) {
 export default function Solicitudes() {
   const { rol, nombre } = useAuth();
   const radio = rol === 'RADIOPERADOR' || rol === 'SUPERADMIN' || rol === 'ADMINIPS';
-  const aph = rol === 'AUXILIAR' || rol === 'SUPERADMIN' || rol === 'ADMINIPS';
+  const aph = rol === 'AUXILIAR' || rol === 'MEDICO' || rol === 'SUPERADMIN' || rol === 'ADMINIPS';
   const [solicitudes, setSolicitudes] = useState<any[]>([]);
   const [pacientes, setPacientes] = useState<any[]>([]);
   const [ambulancias, setAmbulancias] = useState<any[]>([]);
@@ -30,7 +30,7 @@ export default function Solicitudes() {
     setAmbulancias((ambs.data || []).filter((a: any) => a.estado === 'DISPONIBLE' || a.estado === 'EN_SERVICIO'));
     setAphs((users.data || []).filter((u: any) => {
       const r = u.rol?.nombre || u.rol || '';
-      return String(r).includes('AUXILIAR') || String(r).includes('APH');
+      return String(r).includes('AUXILIAR') || String(r).includes('MEDICO') || String(r).includes('APH');
     }));
   };
   useEffect(() => { cargar(); }, []);
@@ -61,7 +61,7 @@ export default function Solicitudes() {
         {radio && <button className="btn-primary" onClick={() => setShowForm(true)}>Nueva llamada</button>}
       </div>
       {showForm && radio && (
-        <Form pacientes={pacientes} radioNombre={nombre || ''} onSave={async (data: any) => {
+        <Form pacientes={pacientes} ambulancias={ambulancias} aphs={aphs} radioNombre={nombre || ''} onSave={async (data: any) => {
           await solicitudService.crear(data); setShowForm(false); cargar();
         }} onCancel={() => setShowForm(false)} />
       )}
@@ -167,10 +167,10 @@ function Asignar({ ambs, aphs, onOk }: any) {
   );
 }
 
-function Form({ pacientes, radioNombre, onSave, onCancel }: any) {
+function Form({ pacientes, ambulancias, aphs, radioNombre, onSave, onCancel }: any) {
   const [nuevoPac, setNuevoPac] = useState({ nombre: '', apellido: '', documento: '', telefono: '' });
   const [crearNuevo, setCrearNuevo] = useState(false);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState({ ambulanciaId: '', asignadoA: '',
     pacienteId: '', origen: '', destino: '', ciudadOrigen: '', ciudadDestino: '',
     motivo: 'Traslado', prioridad: 'NORMAL', observaciones: '', radioperador: radioNombre,
     tipoDestino: 'IPS / centro médico',
@@ -189,11 +189,11 @@ function Form({ pacientes, radioNombre, onSave, onCancel }: any) {
       <h3>Llamada recibida en radio</h3>
       <p className="hint">Escriba origen, destino e indicaciones. El auxiliar las verá en Ver detalle.</p>
       <div className="form-grid-2">
-        <select value={form.pacienteId} onChange={e => setForm({ ...form, pacienteId: e.target.value })}>
+        <select value={form.pacienteId} onChange={e => setForm({ ...form, pacienteId: e.target.value })} disabled={crearNuevo}>
           <option value="">Paciente existente</option>
           {pacientes.map((p: any) => <option key={p.id} value={p.id}>{p.nombre} {p.apellido} — {p.documento}</option>)}
         </select>
-        <label><input type="checkbox" checked={crearNuevo} onChange={e => setCrearNuevo(e.target.checked)} /> Crear paciente nuevo</label>
+        <label><input type="checkbox" checked={crearNuevo} onChange={e => { setCrearNuevo(e.target.checked); if (e.target.checked) setForm({ ...form, pacienteId: '' }); }} /> Crear paciente nuevo</label>
         {crearNuevo && (
           <>
             <input placeholder="Nombre" value={nuevoPac.nombre} onChange={e => setNuevoPac({ ...nuevoPac, nombre: e.target.value })} />
@@ -216,6 +216,14 @@ function Form({ pacientes, radioNombre, onSave, onCancel }: any) {
           <option value="NORMAL">Normal</option>
           <option value="ALTA">Alta</option>
           <option value="URGENTE">Urgente</option>
+        </select>
+        <select value={form.ambulanciaId} onChange={e => setForm({ ...form, ambulanciaId: e.target.value })}>
+          <option value="">Móvil / Ambulancia</option>
+          {ambulancias.map((a: any) => <option key={a.id} value={a.id}>{a.placa} - {a.tipo}</option>)}
+        </select>
+        <select value={form.asignadoA} onChange={e => setForm({ ...form, asignadoA: e.target.value })}>
+          <option value="">APH / Auxiliar</option>
+          {aphs.map((u: any) => <option key={u.id} value={u.nombre}>{u.nombre}</option>)}
         </select>
         <input placeholder="Motivo de la llamada" value={form.motivo} onChange={e => setForm({ ...form, motivo: e.target.value })} />
       </div>

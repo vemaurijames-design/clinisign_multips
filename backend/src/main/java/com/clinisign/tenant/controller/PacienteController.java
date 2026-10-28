@@ -37,8 +37,14 @@ public class PacienteController {
     }
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminar(@PathVariable Long id) {
-        permiso.requerirEdicion();
+        permiso.requerirRoles("SUPERADMIN", "ADMINIPS", "RADIOPERADOR");
         service.eliminar(id);
+        return ResponseEntity.ok().build();
+    }
+    @PutMapping("/{id}/activar")
+    public ResponseEntity<?> activar(@PathVariable Long id) {
+        permiso.requerirRoles("SUPERADMIN", "ADMINIPS", "RADIOPERADOR");
+        service.activar(id);
         return ResponseEntity.ok().build();
     }
     @GetMapping("/export/excel")

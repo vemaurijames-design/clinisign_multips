@@ -7,7 +7,6 @@ import com.clinisign.tenant.repository.PacienteRepository;
 import com.clinisign.tenant.repository.SolicitudRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Map;
 
@@ -27,16 +26,14 @@ public class HistoriaClinicaService {
         HistoriaClinica hc = new HistoriaClinica();
         mapear(hc, b);
         Object pacId = b.get("pacienteId");
-        if (pacId != null && !pacId.toString().isBlank()) {
-            hc.setPaciente(pacRepo.findById(Long.valueOf(pacId.toString())).orElseThrow());
-        }
+        if (pacId != null && !pacId.toString().isBlank()) hc.setPaciente(pacRepo.findById(Long.valueOf(pacId.toString())).orElseThrow());
         Object solId = b.get("solicitudId");
-        if (solId != null && !solId.toString().isBlank()) {
-            hc.setSolicitud(solRepo.findById(Long.valueOf(solId.toString())).orElseThrow());
-        }
-        if (hc.getNombreProfesional() == null || hc.getNombreProfesional().isBlank()) {
-            hc.setNombreProfesional(ActorContext.nombre() != null ? ActorContext.nombre() : ActorContext.email());
-        }
+        if (solId != null && !solId.toString().isBlank()) hc.setSolicitud(solRepo.findById(Long.valueOf(solId.toString())).orElseThrow());
+
+        Integer maxConsec = repo.findMaxConsecutivo();
+        hc.setConsecutivo(maxConsec + 1);
+        hc.setCodigo("HC-FM-05-" + String.format("%04d", maxConsec + 1));
+
         hc = repo.save(hc);
         auditoria.registrar("HISTORIA_CLINICA", "CREAR", hc.getId(), ActorContext.etiqueta());
         return hc;
@@ -48,69 +45,55 @@ public class HistoriaClinicaService {
         return repo.save(hc);
     }
 
-    public void eliminar(Long id) { repo.deleteById(id); }
+    public void activar(Long id) {
+        HistoriaClinica hc = repo.findById(id).orElseThrow(() -> new RuntimeException("No encontrada"));
+        hc.setActivo(true); repo.save(hc);
+    }
+
+    public void eliminar(Long id) {
+        HistoriaClinica hc = repo.findById(id).orElseThrow(() -> new RuntimeException("No encontrada"));
+        hc.setActivo(false); repo.save(hc);
+    }
 
     private void mapear(HistoriaClinica hc, Map<String, Object> b) {
-        set(b, "lugarAtencion", hc::setLugarAtencion);
-        set(b, "horaAtencion", hc::setHoraAtencion);
-        set(b, "tipoAtencion", hc::setTipoAtencion);
-        set(b, "motivoConsulta", hc::setMotivoConsulta);
-        set(b, "enfermedadActual", hc::setEnfermedadActual);
-        set(b, "antecedentesPersonales", hc::setAntecedentesPersonales);
-        set(b, "antecedentesFamiliares", hc::setAntecedentesFamiliares);
-        set(b, "antecedentesQuirurgicos", hc::setAntecedentesQuirurgicos);
-        set(b, "alergias", hc::setAlergias);
-        set(b, "medicamentosActuales", hc::setMedicamentosActuales);
-        set(b, "ttoHabitual", hc::setTtoHabitual);
-        set(b, "ta", hc::setTa);
-        set(b, "fc", hc::setFc);
-        set(b, "fr", hc::setFr);
-        set(b, "temp", hc::setTemp);
-        set(b, "spo2", hc::setSpo2);
-        if (b.containsKey("glasgow") && b.get("glasgow") != null && !b.get("glasgow").toString().isBlank()) {
-            hc.setGlasgow(Integer.valueOf(b.get("glasgow").toString()));
-        }
-        set(b, "viaAerea", hc::setViaAerea);
-        set(b, "respiracion", hc::setRespiracion);
-        set(b, "circulacion", hc::setCirculacion);
-        set(b, "discapacidad", hc::setDiscapacidad);
-        set(b, "exposicion", hc::setExposicion);
-        set(b, "cabezaCuello", hc::setCabezaCuello);
-        set(b, "torax", hc::setTorax);
-        set(b, "abdomen", hc::setAbdomen);
-        set(b, "extremidades", hc::setExtremidades);
-        set(b, "neurologico", hc::setNeurologico);
-        set(b, "cie10Principal", hc::setCie10Principal);
-        set(b, "cie10Descripcion", hc::setCie10Descripcion);
-        set(b, "cie10Secundario", hc::setCie10Secundario);
-        set(b, "tratamiento", hc::setTratamiento);
-        set(b, "procedimientosRealizados", hc::setProcedimientosRealizados);
-        set(b, "medicamentosAdministrados", hc::setMedicamentosAdministrados);
-        set(b, "dosis", hc::setDosis);
-        set(b, "evolucion", hc::setEvolucion);
-        set(b, "destinoPaciente", hc::setDestinoPaciente);
-        set(b, "recomendaciones", hc::setRecomendaciones);
+        set(b, "ta", hc::setTa); set(b, "fc", hc::setFc); set(b, "fr", hc::setFr);
+        set(b, "temp", hc::setTemp); set(b, "spo2", hc::setSpo2); set(b, "glucometria", hc::setGlucometria);
+        set(b, "peso", hc::setPeso); set(b, "talla", hc::setTalla);
+        if (b.containsKey("glasgow") && b.get("glasgow") != null && !b.get("glasgow").toString().isBlank()) hc.setGlasgow(Integer.valueOf(b.get("glasgow").toString()));
+
+        set(b, "taEntrega", hc::setTaEntrega); set(b, "fcEntrega", hc::setFcEntrega); set(b, "frEntrega", hc::setFrEntrega);
+        set(b, "spo2Entrega", hc::setSpo2Entrega); set(b, "tempEntrega", hc::setTempEntrega); set(b, "glucEntrega", hc::setGlucEntrega); set(b, "glasgowEntrega", hc::setGlasgowEntrega);
+        set(b, "nombreEntrega", hc::setNombreEntrega); set(b, "cedulaEntrega", hc::setCedulaEntrega); set(b, "registroEntrega", hc::setRegistroEntrega);
+        set(b, "nombreReceptor", hc::setNombreReceptor); set(b, "cedulaReceptor", hc::setCedulaReceptor);
+
+        set(b, "apoyo", hc::setApoyo); set(b, "finAtencion", hc::setFinAtencion); set(b, "tipoAseguramiento", hc::setTipoAseguramiento);
+        set(b, "tipoTrasladoServicio", hc::setTipoTrasladoServicio); set(b, "estadoCivil", hc::setEstadoCivil); set(b, "ocupacion", hc::setOcupacion);
+        set(b, "otraAntecedente", hc::setOtraAntecedente); set(b, "horaUltimaIngesta", hc::setHoraUltimaIngesta);
+        set(b, "localizacionLesiones", hc::setLocalizacionLesiones);
+        set(b, "tratX", hc::setTratX); set(b, "tratA", hc::setTratA); set(b, "tratB", hc::setTratB); set(b, "tratC", hc::setTratC);
+        set(b, "desfibrilacion", hc::setDesfibrilacion); set(b, "otrosTratamientos", hc::setOtrosTratamientos);
+        set(b, "instruccionesTraslado", hc::setInstruccionesTraslado); set(b, "resultado", hc::setResultado); set(b, "complicacionesTraslado", hc::setComplicacionesTraslado);
+        set(b, "nombreAsignaTraslado", hc::setNombreAsignaTraslado); set(b, "entidadReceptora", hc::setEntidadReceptora);
+        set(b, "docAcompanante", hc::setCedulaAcompanante); set(b, "nombreAcompanante", hc::setNombreAcompanante); set(b, "parentescoAcompanante", hc::setParentescoAcompanante);
+        set(b, "firmaEntidad", hc::setFirmaEntidad); set(b, "firmaEntidadReceptora", hc::setFirmaEntidadReceptora);
+
+        set(b, "viaAerea", hc::setViaAerea); set(b, "respiracion", hc::setRespiracion); set(b, "circulacion", hc::setCirculacion);
+        set(b, "piel", hc::setPiel); set(b, "hemo", hc::setHemo);
+
+        set(b, "placaMovil", hc::setPlacaMovil); set(b, "origen", hc::setOrigen);
+        set(b, "destino1", hc::setDestino1); set(b, "destino2", hc::setDestino2); set(b, "destinoFinal", hc::setDestinoFinal);
+        set(b, "conductor", hc::setConductor); set(b, "tripulante", hc::setTripulante);
+        set(b, "horaDespacho", hc::setHoraDespacho); set(b, "horaLlegada", hc::setHoraLlegada); set(b, "horaSalida", hc::setHoraSalida);
+        set(b, "alcohol", hc::setAlcohol); set(b, "fumador", hc::setFumador); set(b, "spa", hc::setSpa);
+
+        set(b, "alergias", hc::setAlergias); set(b, "medicamentosActuales", hc::setMedicamentosActuales); set(b, "antecedentesPersonales", hc::setAntecedentesPersonales);
+        set(b, "antecedentesQuirurgicos", hc::setAntecedentesQuirurgicos); set(b, "destinoPaciente", hc::setDestinoPaciente); set(b, "tipoAtencion", hc::setTipoAtencion);
+        set(b, "motivoConsulta", hc::setMotivoConsulta); set(b, "enfermedadActual", hc::setEnfermedadActual);
+        set(b, "firmaPaciente", hc::setFirmaPaciente); set(b, "firmaAcompanante", hc::setFirmaAcompanante); set(b, "firmaProfesional", hc::setFirmaProfesional);
+        set(b, "nombreProfesional", hc::setNombreProfesional); set(b, "registroProfesional", hc::setRegistroProfesional); set(b, "documentoProfesional", hc::setDocumentoProfesional);
+        set(b, "cie10Principal", hc::setCie10Principal); set(b, "tratamiento", hc::setTratamiento);
+        set(b, "procedimientosRealizados", hc::setProcedimientosRealizados); set(b, "evolucion", hc::setEvolucion);
         set(b, "detalleJson", hc::setDetalleJson);
-        set(b, "placaMovil", hc::setPlacaMovil);
-        set(b, "origen", hc::setOrigen);
-        set(b, "destino1", hc::setDestino1);
-        set(b, "destino2", hc::setDestino2);
-        set(b, "conductor", hc::setConductor);
-        set(b, "tripulante", hc::setTripulante);
-        set(b, "horaDespacho", hc::setHoraDespacho);
-        set(b, "horaLlegada", hc::setHoraLlegada);
-        set(b, "horaSalida", hc::setHoraSalida);
-        set(b, "alcohol", hc::setAlcohol);
-        set(b, "fumador", hc::setFumador);
-        set(b, "spa", hc::setSpa);
-        set(b, "piel", hc::setPiel);
-        set(b, "hemo", hc::setHemo);
-        set(b, "firmaPaciente", hc::setFirmaPaciente);
-        set(b, "firmaAcompanante", hc::setFirmaAcompanante);
-        set(b, "firmaProfesional", hc::setFirmaProfesional);
-        set(b, "nombreProfesional", hc::setNombreProfesional);
-        set(b, "registroProfesional", hc::setRegistroProfesional);
-        set(b, "documentoProfesional", hc::setDocumentoProfesional);
     }
 
     private void set(Map<String, Object> b, String key, java.util.function.Consumer<String> setter) {

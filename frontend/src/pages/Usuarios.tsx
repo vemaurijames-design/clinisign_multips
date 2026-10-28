@@ -44,6 +44,16 @@ export default function Usuarios() {
     setShowForm(false); setEditing(null); cargar();
   };
 
+  const eliminarPermanente = async (id: number) => {
+    if (!confirm('¿ELIMINAR permanentemente este usuario de la base de datos?\n\nEsta acción no se puede deshacer.')) return;
+    try {
+      await usuarioService.eliminar(id);
+      alert('✓ Usuario eliminado de la base de datos');
+      cargar();
+    } catch (e: any) {
+      alert('✗ Error: ' + (e.response?.data?.message || 'No se pudo eliminar'));
+    }
+  };
   const toggle = async (u: any) => {
     if (!esSuper || !tenantId) return;
     await superadminService.toggleUsuario(tenantId, u.id, !u.activo);
@@ -91,6 +101,7 @@ export default function Usuarios() {
                     <>
                       <button onClick={() => { setEditing(u); setShowForm(true); }}>Editar</button>
                       <button onClick={() => toggle(u)}>{u.activo ? 'Deshabilitar' : 'Habilitar'}</button>
+                      {rol === 'SUPERADMIN' && <button onClick={() => eliminarPermanente(u.id)} style={{background:'#dc3545',color:'#fff',marginLeft:4}}>Eliminar</button>}
                     </>
                   ) : <span className="hint">Solo lectura</span>}
                 </td>
@@ -119,7 +130,7 @@ function UsuarioForm({ usuario, onSave, onCancel }: any) {
         <input placeholder="Documento" value={form.documento} onChange={e => setForm({ ...form, documento: e.target.value })} />
         <input placeholder="Teléfono" value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })} />
         <select value={form.rol} onChange={e => setForm({ ...form, rol: e.target.value })}>
-          {['ADMINIPS','AUXILIAR','RADIOPERADOR','TECNICO','CALIDAD'].map(r => <option key={r}>{r}</option>)}
+          {['ADMINIPS','AUXILIAR','RADIOPERADOR','TECNICO','CALIDAD','MEDICO'].map(r => <option key={r}>{r}</option>)}
         </select>
         <input type="password" placeholder={usuario ? 'Nueva clave (opcional)' : 'Contraseña'} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
       </div>

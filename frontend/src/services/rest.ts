@@ -52,6 +52,7 @@ export const pacienteService = {
   crear: (data: any) => api.post('/pacientes', data),
   actualizar: (id: number, data: any) => api.put(`/pacientes/${id}`, data),
   eliminar: (id: number) => api.delete(`/pacientes/${id}`),
+  activar: (id: number) => api.put(`/pacientes/${id}/activar`),
   exportExcel: () => api.get('/pacientes/export/excel', { responseType: 'blob' }),
   importExcel: (file: File) => {
     const formData = new FormData();
@@ -79,6 +80,7 @@ export const historiaClinicaService = {
   porPaciente: (pacienteId: number) => api.get(`/historias-clinicas/paciente/${pacienteId}`),
   crear: (data: any) => api.post('/historias-clinicas', data),
   eliminar: (id: number) => api.delete(`/historias-clinicas/${id}`),
+  activar: (id: number) => api.put(`/historias-clinicas/${id}/activar`),
   pdfUrl: (id: number) => `${apiOrigin()}/api/historias-clinicas/${id}/pdf?${authQs()}`,
 };
 
@@ -105,6 +107,7 @@ export const consentimientoService = {
   porDocumento: (documento: string) => api.get(`/consentimientos/documento/${encodeURIComponent(documento)}`),
   crear: (data: any) => api.post('/consentimientos', data),
   eliminar: (id: number) => api.delete(`/consentimientos/${id}`),
+  activar: (id: number) => api.put(`/consentimientos/${id}/activar`),
   enviar: (id: number, correoDestino: string) => api.post(`/consentimientos/${id}/enviar`, { correoDestino }),
   pdfUrl: (id: number) =>
     `${apiOrigin()}/api/consentimientos/${id}/pdf?${authQs()}`,

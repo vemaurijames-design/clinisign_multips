@@ -1,3 +1,4 @@
+
 package com.clinisign.tenant.controller;
 
 import com.clinisign.tenant.service.AuditoriaService;
@@ -17,7 +18,7 @@ public class AuditoriaController {
 
     @GetMapping
     public ResponseEntity<?> listar() {
-        permiso.requerirRoles("SUPERADMIN", "ADMINIPS", "CALIDAD");
+        permiso.requerirRoles("SUPERADMIN", "ADMINIPS", "CALIDAD", "RADIOPERADOR", "MEDICO");
         return ResponseEntity.ok(service.listar());
     }
 }

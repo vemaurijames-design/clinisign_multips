@@ -17,7 +17,7 @@ public class PermisoUtil {
 
     public void requerirEdicion() {
         String rol = rolActual();
-        if (!"SUPERADMIN".equals(rol) && !"ADMINIPS".equals(rol)) {
+        if (!"SUPERADMIN".equals(rol) && !"ADMINIPS".equals(rol) && !"RADIOPERADOR".equals(rol) && !"AUXILIAR".equals(rol) && !"MEDICO".equals(rol)) {
             throw new RuntimeException("No tiene permisos de edición. Rol actual: " + rol);
         }
     }
@@ -43,7 +43,7 @@ public class PermisoUtil {
     }
 
     public boolean puedeOperarSolicitudes() {
-        return Set.of("SUPERADMIN", "ADMINIPS", "RADIOPERADOR", "AUXILIAR").contains(rolActual());
+        return Set.of("SUPERADMIN", "ADMINIPS", "RADIOPERADOR", "AUXILIAR", "MEDICO").contains(rolActual());
     }
 
     public void requerirOperacionSolicitud() {
@@ -62,5 +62,27 @@ public class PermisoUtil {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || auth.getAuthorities().isEmpty()) return null;
         return auth.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
+    }
+
+    // Permisos de administración (anular, enviar correo)
+    public boolean puedeAdministrar() {
+        return Set.of("SUPERADMIN", "ADMINIPS", "RADIOPERADOR").contains(rolActual());
+    }
+
+    public void requerirAdministrador() {
+        if (!puedeAdministrar()) {
+            throw new RuntimeException("Solo ADMINIPS, RADIOPERADOR o SUPERADMIN pueden realizar esta acción. Rol actual: " + rolActual());
+        }
+    }
+
+    // Permisos de configuración
+    public boolean puedeConfigurar() {
+        return Set.of("SUPERADMIN", "ADMINIPS", "RADIOPERADOR").contains(rolActual());
+    }
+
+    public void requerirConfiguracion() {
+        if (!puedeConfigurar()) {
+            throw new RuntimeException("Solo ADMINIPS, RADIOPERADOR o SUPERADMIN pueden configurar. Rol actual: " + rolActual());
+        }
     }
 }

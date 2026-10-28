@@ -1,6 +1,8 @@
 package com.clinisign.tenant.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,6 +18,7 @@ public class Consentimiento {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "historia_clinica_id")
     private HistoriaClinica historiaClinica;
@@ -41,12 +44,18 @@ public class Consentimiento {
     private String nombreAcompanante;
     @Column(name = "documento_acompanante")
     private String documentoAcompanante;
+    @Column(name = "parentesco_acompanante")
+    private String parentescoAcompanante;
     @Column(name = "firma_acompanante")
     private String firmaAcompanante;
     @Column(name = "nombre_auxiliar")
     private String nombreAuxiliar;
     @Column(name = "registro_auxiliar")
     private String registroAuxiliar;
+    @Column(name = "documento_auxiliar")
+    private String documentoAuxiliar;
+    @Column(name = "firma_profesional", columnDefinition = "TEXT")
+    private String firmaProfesional;
     @Column(name = "registrado_por")
     private String registradoPor;
     private Boolean firmado = false;
@@ -58,6 +67,8 @@ public class Consentimiento {
     private Date fechaEnvio;
     @Column(name = "fecha_creacion")
     private Date fechaCreacion;
+
+    private Boolean activo = true;
 
     @PrePersist
     void prePersist() {

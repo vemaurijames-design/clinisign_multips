@@ -27,7 +27,7 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        String[] roles = {"SUPERADMIN", "ADMINIPS", "AUXILIAR", "RADIOPERADOR", "TECNICO", "CALIDAD"};
+        String[] roles = {"SUPERADMIN", "ADMINIPS", "AUXILIAR", "RADIOPERADOR", "TECNICO", "CALIDAD", "MEDICO"};
         for (String nombre : roles) {
             if (rolRepository.findByNombre(nombre).isEmpty()) {
                 Rol rol = new Rol();
@@ -56,13 +56,13 @@ public class DataInitializer implements CommandLineRunner {
                 return n;
             });
             if (cfg.getSmtpPassword() == null || cfg.getSmtpPassword().isBlank()) {
-                cfg.setSmtpHost("smtp-mail.outlook.com");
+                cfg.setSmtpHost("smtp.gmail.com");
                 cfg.setSmtpPort(587);
                 cfg.setSmtpAuth(true);
                 cfg.setSmtpStarttls(true);
-                cfg.setSmtpUsername("notificacionesclinisign@hotmail.com");
-                cfg.setSmtpPassword("GQDCUQHFAJWEG7WPQWRP2YYFD");
-                cfg.setCorreoFrom("notificacionesclinisign@hotmail.com");
+                cfg.setSmtpUsername("inforclinisign@gmail.com");
+                cfg.setSmtpPassword("jldnstjbzcrddttx");
+                cfg.setCorreoFrom("inforclinisign@gmail.com");
                 ipsConfigRepository.save(cfg);
                 log.info("SMTP Hotmail configurado para IPS {}", ips.getNombre());
             }
