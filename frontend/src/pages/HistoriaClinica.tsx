@@ -34,8 +34,6 @@ function chips(list: string[], selected: string[], setSel: (v: string[]) => void
 
 export default function HistoriaClinica() {
   const [historias, setHistorias] = useState<any[]>([]);
-  const [errorLista, setErrorLista] = useState('');
-  const [cargando, setCargando] = useState(true);
   const [pagina, setPagina] = useState(1);
   const porPagina = 10;
   const [showForm, setShowForm] = useState(false);
@@ -43,41 +41,10 @@ export default function HistoriaClinica() {
   const [buscado, setBuscado] = useState('');
   const { rol } = useAuth();
   const cargar = async () => {
-    setCargando(true);
-    setErrorLista('');
-    try {
-      const hcs = await historiaClinicaService.listar();
-      const datos = Array.isArray(hcs.data) ? hcs.data : [];
-      setHistorias(datos.sort((a: any, b: any) => new Date(a.fechaAtencion || 0).getTime() - new Date(b.fechaAtencion || 0).getTime()));
-    } catch (error: any) {
-      setHistorias([]);
-      const mensaje = error?.response?.data?.message || error?.response?.data?.error;
-      setErrorLista(typeof mensaje === 'string' ? mensaje : 'No se pudieron cargar las historias clínicas. Verifique la conexión y el esquema de la base de datos.');
-    } finally {
-      setCargando(false);
-    }
+    const hcs = await historiaClinicaService.listar();
+    setHistorias((hcs.data || []).sort((a: any, b: any) => new Date(a.fechaAtencion || 0).getTime() - new Date(b.fechaAtencion || 0).getTime()));
   };
-  const cambiarEstado = async (hc: any, activar: boolean) => {
-    const accion = activar ? 'activar' : 'anular';
-    const pregunta = activar
-      ? '¿Activar nuevamente esta historia clínica?'
-      : '¿Anular esta historia clínica? Quedará registrada en la bitácora.';
-    if (!confirm(pregunta)) return;
-
-    try {
-      if (activar) {
-        await historiaClinicaService.activar(hc.id);
-      } else {
-        await historiaClinicaService.eliminar(hc.id);
-      }
-      await cargar();
-      alert(activar ? 'Historia clínica activada correctamente.' : 'Historia clínica anulada correctamente.');
-    } catch (error: any) {
-      const mensaje = error?.response?.data?.message || error?.response?.data?.error;
-      alert(`No se pudo ${accion} la historia clínica. ${typeof mensaje === 'string' ? mensaje : 'Verifica tu permiso e inténtalo de nuevo.'}`);
-    }
-  };
-  useEffect(() => { void cargar(); }, []);
+  useEffect(() => { cargar(); }, []);
   const filtrados = historias.filter(hc => !buscado || `${hc.paciente?.nombre} ${hc.paciente?.apellido} ${hc.paciente?.documento}`.toLowerCase().includes(buscado.toLowerCase()));
   const totalPaginas = Math.ceil(filtrados.length / porPagina);
   const vis = filtrados.slice((pagina - 1) * porPagina, pagina * porPagina);
@@ -94,21 +61,14 @@ export default function HistoriaClinica() {
         <input placeholder="Buscar paciente o cédula" value={q} onChange={e => setQ(e.target.value)} />
         <button type="button" className="btn-primary" onClick={() => setBuscado(q)}>Buscar</button>
       </div>
-      {errorLista && <div role="alert" style={{ margin: '12px 0', padding: 12, border: '1px solid #e59a9a', borderRadius: 8, background: '#fff1f1', color: '#8a1c1c' }}>
-        <strong>No fue posible cargar las historias clínicas.</strong><br />{errorLista}{' '}
-        <button type="button" onClick={() => void cargar()}>Reintentar</button>
-      </div>}
       {showForm && <HCForm onSave={async (data: any) => {
-        await historiaClinicaService.crear(data); localStorage.removeItem('hc_borrador'); setShowForm(false); await cargar();
+        await historiaClinicaService.crear(data); localStorage.removeItem('hc_borrador'); setShowForm(false); cargar();
       }} onCancel={() => setShowForm(false)} />}
       <div className="table-wrap">
         <table className="data-table">
           <thead><tr><th>Consec.</th><th>Fecha</th><th>Paciente</th><th>Clasificación</th><th>Motivo</th><th>Profesional</th><th>Estado</th><th></th></tr></thead>
           <tbody>
-            {cargando ? <tr><td colSpan={8} style={{ textAlign: 'center', padding: 20 }}>Cargando historias clínicas…</td></tr>
-              : errorLista ? <tr><td colSpan={8} style={{ textAlign: 'center', padding: 20 }}>La lista no está disponible hasta corregir el error.</td></tr>
-              : vis.length === 0 ? <tr><td colSpan={8} style={{ textAlign: 'center', padding: 20 }}>No hay historias clínicas para mostrar.</td></tr>
-              : vis.map(hc => (
+            {vis.map(hc => (
               <tr key={hc.id}>
                 <td style={{fontFamily:'monospace',fontWeight:500}}>{hc.codigo || 'HC-FM-05-' + String(hc.consecutivo || 0).padStart(4, '0')}</td><td>{hc.fechaAtencion ? new Date(hc.fechaAtencion).toLocaleString() : ''}</td>
                 <td>{hc.paciente?.nombre} {hc.paciente?.apellido} {hc.paciente?.documento}</td>
@@ -119,19 +79,21 @@ export default function HistoriaClinica() {
                   {hc.registroProfesional && <div style={{fontSize:11,color:'#666'}}>REG: {hc.registroProfesional}</div>}
                 </td><td style={{color: hc.activo === false ? 'red' : 'green'}}>{hc.activo === false ? 'Anulado' : 'Activo'}</td>
                 <td>
-                  <a href={historiaClinicaService.pdfUrl(hc.id)} target="_blank" rel="noreferrer"><button>PDF</button></a>
-                  {['SUPERADMIN','ADMINIPS','RADIOPERADOR'].includes(rol) && hc.activo !== false && <button type="button" onClick={() => void cambiarEstado(hc, false)}>Anular</button>}
-                  {['SUPERADMIN','ADMINIPS','RADIOPERADOR'].includes(rol) && hc.activo === false && <button type="button" onClick={() => void cambiarEstado(hc, true)} style={{background:'#1a9f5c',color:'#fff'}}>Activar</button>}
+                  <a href={historiaClinicaService.pdfUrl(hc.id)} target="_blank" rel="noreferrer"><button style={{background:'#1a5fb4',color:'#fff'}}>Ver PDF</button></a>
+                  {['SUPERADMIN','ADMINIPS','RADIOPERADOR'].includes(rol) && hc.activo !== false && <button onClick={async () => { if (confirm('¿Anular esta historia clínica? Quedará registrada en la bitácora.')) { await historiaClinicaService.eliminar(hc.id); cargar(); } }}>Anular</button>}
+                  {['SUPERADMIN','ADMINIPS','RADIOPERADOR'].includes(rol) && hc.activo === false && <button onClick={async () => { if (confirm('¿Activar?')) { await historiaClinicaService.activar(hc.id); cargar(); } }} style={{background:'#1a9f5c',color:'#fff'}}>Activar</button>}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        <div style={{position:'fixed',bottom:40,left:260,right:0,background:'linear-gradient(180deg,#f8f9fa 0%,#fff 100%)',borderTop:'1px solid #e8e8e8',padding:'14px 24px',display:'flex',justifyContent:'center',alignItems:'center',gap:20,zIndex:100}}>
-          <span style={{color:'#1a5fb4',fontSize:13,fontWeight:500}}>{errorLista ? 'Lista no disponible' : cargando ? 'Cargando…' : `${filtrados.length} registros`}</span>
-          <button disabled={pagina === 1} onClick={() => setPagina(p => p - 1)} style={{padding:'8px 20px',borderRadius:8,border:'none',background:pagina===1?'#e8e8e8':'#1a5fb4',color:pagina===1?'#999':'#fff',cursor:pagina===1?'not-allowed':'pointer',fontWeight:500,fontSize:13}}>← Anterior</button>
-          <span style={{fontWeight:600,color:'#333',fontSize:14}}>Página {pagina} de {totalPaginas || 1}</span>
-          <button disabled={pagina === totalPaginas || totalPaginas === 0} onClick={() => setPagina(p => p + 1)} style={{padding:'8px 20px',borderRadius:8,border:'none',background:(pagina===totalPaginas||totalPaginas===0)?'#e8e8e8':'#1a5fb4',color:(pagina===totalPaginas||totalPaginas===0)?'#999':'#fff',cursor:(pagina===totalPaginas||totalPaginas===0)?'not-allowed':'pointer',fontWeight:500,fontSize:13}}>Siguiente →</button>
+        <div style={{position:'fixed',bottom:0,left:0,right:0,background:'linear-gradient(180deg,#f8f9fa 0%,#fff 100%)',borderTop:'1px solid #e8e8e8',padding:'10px 16px',display:'flex',flexWrap:'wrap',justifyContent:'space-between',alignItems:'center',gap:8,zIndex:100}}>
+          <span style={{color:'#1a5fb4',fontSize:12,fontWeight:500}}>{filtrados.length} registros</span>
+          <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+            <button disabled={pagina === 1} onClick={() => setPagina(p => p - 1)} style={{padding:'6px 12px',borderRadius:6,border:'none',background:pagina===1?'#e8e8e8':'#1a5fb4',color:pagina===1?'#999':'#fff',cursor:pagina===1?'not-allowed':'pointer',fontWeight:500,fontSize:12}}>← Ant</button>
+            <span style={{fontWeight:600,color:'#333',fontSize:13}}>{pagina}/{totalPaginas || 1}</span>
+            <button disabled={pagina === totalPaginas || totalPaginas === 0} onClick={() => setPagina(p => p + 1)} style={{padding:'6px 12px',borderRadius:6,border:'none',background:(pagina===totalPaginas||totalPaginas===0)?'#e8e8e8':'#1a5fb4',color:(pagina===totalPaginas||totalPaginas===0)?'#999':'#fff',cursor:(pagina===totalPaginas||totalPaginas===0)?'not-allowed':'pointer',fontWeight:500,fontSize:12}}>Sig →</button>
+          </div>
         </div>
         <div style={{height:60}}></div>
       </div>
@@ -165,6 +127,7 @@ function HCForm({ onSave, onCancel }: any) {
     instruccion: '', resultado: '', docAcompanante: '', nombreAcompanante: '', parentescoAcompanante: '', complicaciones: '', asignaTraslado: '',
     nombreProfesional: '', registroProfesional: '',
   });
+    // Auto-save draft
   useEffect(() => {
     const saved = localStorage.getItem('historiaClinicaDraft');
     if (saved) {
@@ -176,7 +139,29 @@ function HCForm({ onSave, onCancel }: any) {
   }, [form]);
   const limpiarBorrador = () => {
     localStorage.removeItem('historiaClinicaDraft');
-    alert('Borrador eliminado. Recargue para empezar de nuevo.');
+    setForm({
+      fechaAtencion: new Date().toISOString().slice(0, 10),
+      horaAtencion: new Date().toTimeString().slice(0, 5),
+      horaDespacho: new Date().toTimeString().slice(0, 5),
+      horaLlegada: new Date().toTimeString().slice(0, 5),
+      horaSalida: new Date().toTimeString().slice(0, 5),
+      placaMovil: '', origen: '', destino1: '', destino2: '',
+      tipoAtencion: 'Urgencia', conductor: '', tripulante: '', tipoAseguramiento: '', tipoTraslado: '',
+      ta: '', fc: '', fr: '', temp: '', spo2: '', glasgow: '', glucometria: '',
+      ta2: '', fc2: '', fr2: '', temp2: '', spo2b: '', glasgow2: '',
+      taEntrega: '', fcEntrega: '', frEntrega: '', spo2Entrega: '', tempEntrega: '', glucEntrega: '', glasgowEntrega: '',
+      nombreEntrega: '', cedulaEntrega: '', nombreReceptor: '', cedulaReceptor: '',
+      viaAerea: 'Permeable', respiracion: 'Normal', circulacion: 'Estable',
+      piel: 'Normal', hemo: 'Estable', peso: '', talla: '',
+      alergias: 'NO', medicamentosActuales: 'NO', antecedentesPersonales: 'NO',
+      antecedentesQuirurgicos: 'NO', fumador: 'NO', alcohol: 'NO', spa: 'NO',
+      cie10Principal: '', tratamiento: '', evolucion: '', destinoPaciente: '',
+      instruccion: '', resultado: '', docAcompanante: '', nombreAcompanante: '', parentescoAcompanante: '', complicaciones: '', asignaTraslado: '',
+      nombreProfesional: '', registroProfesional: '',
+    });
+    setEventos([]); setMotMed([]); setMotTra([]); setCuidados([]); setLesiones([]); setTrat([]);
+    setPac(null);
+    alert('Formulario limpiado. Puede empezar de nuevo.');
   };
 
   const [eventos, setEventos] = useState<string[]>([]);
@@ -192,11 +177,16 @@ function HCForm({ onSave, onCancel }: any) {
   const firmaH = useRef<any>(null);
   const set = (k: string, v: string) => {
     const next = { ...form, [k]: v };
-    if (k === 'profesional' && !form.nombreEntrega) next.nombreEntrega = v;
-    if (k === 'cedulaProfesional' && !form.cedulaEntrega) next.cedulaEntrega = v;
+    // Auto-completar entrega con datos del profesional
+    // Sincronizar siempre con quien entrega
+    if (k === 'profesional') next.nombreEntrega = v;
+    if (k === 'cedulaProfesional') next.cedulaEntrega = v;
+    if (k === 'registroProfesional') next.registroEntrega = v;
     setForm(next);
     try { localStorage.setItem('hc_borrador', JSON.stringify(next)); } catch {}
   };
+  // Formulario inicia en blanco
+  // Enviar borrador automáticamente cuando hay conexión
   useEffect(() => {
     const enviarBorrador = async () => {
       const saved = localStorage.getItem('hc_borrador');
@@ -221,6 +211,7 @@ function HCForm({ onSave, onCancel }: any) {
     if (!form.cedulaProfesional?.trim()) return alert('La cédula del profesional es obligatoria');
     if (!form.registroProfesional?.trim()) return alert('El registro profesional es obligatorio');
     if (!confirm('Este documento contiene información confidencial del paciente conforme a la Ley 1581 de 2012 y la Resolución 1995 de 1999.\n\n¿Autoriza guardar y generar el PDF?')) return;
+    // Validar tamaño de firmas (máximo 2MB total)
     const firmas = [
       firmaP.current?.toDataURL?.() || '',
       firmaA.current?.toDataURL?.() || '',
@@ -331,6 +322,7 @@ function HCForm({ onSave, onCancel }: any) {
         <label>Nombre del profesional (*)<input placeholder="Nombre completo" value={form.profesional} onChange={e => set('profesional', e.target.value)} /></label>
         <label>Cédula del profesional (*)<input placeholder="Número de cédula" value={form.cedulaProfesional} onChange={e => set('cedulaProfesional', e.target.value)} /></label>
         <label>Registro profesional (*)<input placeholder="Registro médico" value={form.registroProfesional} onChange={e => set('registroProfesional', e.target.value)} /></label>
+        <input placeholder="REG" value={form.registroProfesional} onChange={e => set('registroProfesional', e.target.value)} />
       </div>
 
       <h4 style={{ background: '#edf2f7', color: '#1a365d', padding: '10px 16px', borderRadius: 6, marginTop: 20, fontWeight: 600 }}>3. Cuidados anteriores</h4>
@@ -433,7 +425,7 @@ function HCForm({ onSave, onCancel }: any) {
         <input placeholder="Cédula quien recibe" value={form.cedulaReceptor} onChange={e => set('cedulaReceptor', e.target.value)} />
       </div>
 
-      <h4>Acompañante / responsable</h4>
+            <h4>Acompañante / responsable</h4>
       <div className="form-grid">
         <input placeholder="Nombre del acompañante" value={form.nombreAcompanante} onChange={e => set('nombreAcompanante', e.target.value)} />
         <input placeholder="Cédula del acompañante *" value={form.docAcompanante} onChange={e => set('docAcompanante', e.target.value)} />
@@ -457,7 +449,7 @@ function HCForm({ onSave, onCancel }: any) {
               evolucion: '', tratamiento: '', medicamentosAdministrados: '',
               cie10Principal: '', destinoPaciente: '', recomendaciones: '',
               nombreProfesional: '', registroProfesional: '', profesional: '', cedulaProfesional: '',
-              nombreAcompanante: '', docAcompanante: '', parentescoAcompanante: '',
+              nombreAcompanante: '', docAcompanante: '',
               antecedentesPersonales: '', antecedentesQuirurgicos: '', medicamentosActuales: '',
               alergias: '', fumador: '', alcohol: '', spa: '',
             });

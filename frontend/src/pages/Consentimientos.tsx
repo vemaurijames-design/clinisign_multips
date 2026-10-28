@@ -128,12 +128,12 @@ export default function Consentimientos() {
             ))}
           </tbody>
         </table>
-        <div style={{ position: 'fixed', bottom: 40, left: 260, right: 0, background: 'linear-gradient(180deg, #f8f9fa 0%, #fff 100%)', borderTop: '1px solid #e0e0e0', padding: '12px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 100, boxShadow: '0 -2px 10px rgba(0,0,0,0.05)' }}>
-          <span style={{ color: '#1a5fb4', fontSize: 13, fontWeight: 500 }}>{items.length} registros</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <button disabled={page === 1} onClick={() => setPage(p => p - 1)} style={{ padding: '8px 16px', borderRadius: 6, border: 'none', background: page === 1 ? '#e8e8e8' : '#1a5fb4', color: page === 1 ? '#999' : '#fff', cursor: page === 1 ? 'not-allowed' : 'pointer', fontWeight: 500, fontSize: 13 }}>← Anterior</button>
-            <span style={{ fontWeight: 600, color: '#333', fontSize: 14 }}>Página {page} de {Math.ceil(items.length / perPage) || 1}</span>
-            <button disabled={page * perPage >= items.length} onClick={() => setPage(p => p + 1)} style={{ padding: '8px 16px', borderRadius: 6, border: 'none', background: page * perPage >= items.length ? '#e8e8e8' : '#1a5fb4', color: page * perPage >= items.length ? '#999' : '#fff', cursor: page * perPage >= items.length ? 'not-allowed' : 'pointer', fontWeight: 500, fontSize: 13 }}>Siguiente →</button>
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'linear-gradient(180deg, #f8f9fa 0%, #fff 100%)', borderTop: '1px solid #e0e0e0', padding: '10px 16px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8, zIndex: 100, boxShadow: '0 -2px 10px rgba(0,0,0,0.05)' }}>
+          <span style={{ color: '#1a5fb4', fontSize: 12, fontWeight: 500 }}>{items.length} registros</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <button disabled={page === 1} onClick={() => setPage(p => p - 1)} style={{ padding: '6px 12px', borderRadius: 6, border: 'none', background: page === 1 ? '#e8e8e8' : '#1a5fb4', color: page === 1 ? '#999' : '#fff', cursor: page === 1 ? 'not-allowed' : 'pointer', fontWeight: 500, fontSize: 12 }}>← Ant</button>
+            <span style={{ fontWeight: 600, color: '#333', fontSize: 13 }}>{page}/{Math.ceil(items.length / perPage) || 1}</span>
+            <button disabled={page * perPage >= items.length} onClick={() => setPage(p => p + 1)} style={{ padding: '6px 12px', borderRadius: 6, border: 'none', background: page * perPage >= items.length ? '#e8e8e8' : '#1a5fb4', color: page * perPage >= items.length ? '#999' : '#fff', cursor: page * perPage >= items.length ? 'not-allowed' : 'pointer', fontWeight: 500, fontSize: 12 }}>Sig →</button>
           </div>
         </div>
       </div>
