@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { consentimientoService, pacienteService, plantillaService } from '../services/rest';
 import SignaturePad from '../components/SignaturePad';
 import BuscadorPaciente from '../components/BuscadorPaciente';
+import { addPending } from '../utils/offlineQueue';
 import { useAuth } from '../context/AuthContext';
 
 const CONS = [
@@ -121,8 +122,9 @@ export default function Consentimientos() {
                       }
                     }
                   }}>Enviar</button>}
-                  {['SUPERADMIN','ADMINIPS','RADIOPERADOR'].includes(rol) && c.activo !== false && <button onClick={async () => { if (confirm('¿Anular? Quedará en bitácora.')) { await consentimientoService.eliminar(c.id); cargar(); } }}>Anular</button>}
-                  {['SUPERADMIN','ADMINIPS','RADIOPERADOR'].includes(rol) && c.activo === false && <button onClick={async () => { if (confirm('¿Activar?')) { await consentimientoService.activar(c.id); cargar(); } }} style={{background:'#1a9f5c',color:'#fff'}}>Activar</button>}
+                  {rol === 'SUPERADMIN' && <button onClick={async () => { if (confirm('¿Eliminar permanentemente este consentimiento? El consecutivo quedará libre. Esta acción no se puede deshacer.')) { await consentimientoService.eliminar(c.id); cargar(); } }} style={{background:'#dc3545',color:'#fff',marginLeft:4}}>Eliminar</button>}
+                  {['ADMINIPS','RADIOPERADOR'].includes(rol) && c.activo !== false && <button onClick={async () => { if (confirm('¿Anular este consentimiento? Quedará registrado en la bitácora.')) { await consentimientoService.anular(c.id); cargar(); } }} style={{background:'#f59e0b',color:'#fff',marginLeft:4}}>Anular</button>}
+                  {['ADMINIPS','RADIOPERADOR'].includes(rol) && c.activo === false && <button onClick={async () => { if (confirm('¿Activar nuevamente este consentimiento?')) { await consentimientoService.activar(c.id); cargar(); } }} style={{background:'#1a9f5c',color:'#fff',marginLeft:4}}>Activar</button>}
                 </td>
               </tr>
             ))}
@@ -178,9 +180,34 @@ function DocumentoSian({ tipo, onDone, onCancel }: { tipo: string; onDone: () =>
   const guardar = async () => {
     if (!confirm('Este documento contiene información confidencial del paciente conforme a la Ley 1581 de 2012.\n\n¿Confirma que desea guardar el consentimiento/desistimiento?')) return;
     if (!navigator.onLine) {
-      const draft = { tipo, codigo, pac, calidad, responsableDe, procs, otro, acomp, aux, reg, docAux, leido, timestamp: Date.now() };
-      localStorage.setItem('consent_pending_' + Date.now(), JSON.stringify(draft));
-      alert('No tienes internet.\n\nSe guardó el consentimiento en borrador.\nSe enviará automáticamente cuando haya conexión.');
+      const payload = {
+        tipo,
+        codigo,
+        plantillaId: plantilla?.id,
+        beneficios: plantilla?.beneficios,
+        riesgos: plantilla?.riesgos,
+        alternativas: plantilla?.alternativas,
+        observaciones: plantilla?.textoLegal,
+        documento: pac?.documento,
+        telefono: pac?.telefono,
+        calidad: calidad + (responsableDe ? ' de ' + responsableDe : ''),
+        procedimientos: [...procs, otro].filter(Boolean).join('; '),
+        nombreAcompanante: acomp,
+        nombreAuxiliar: aux,
+        cedulaAuxiliar: cedulaAux,
+        documentoAuxiliar: cedulaAux,
+        registroAuxiliar: reg,
+        firmaProfesional: firmaProf,
+        documentoAcompanante: docAcomp,
+        parentescoAcompanante: parentescoAcomp,
+        firma,
+        huella,
+        huellaDigital: huella,
+        firmado: true,
+      };
+      addPending('consentimiento', payload);
+      alert('⚠ Sin conexión a internet\n\nEl consentimiento se guardó localmente.\n\nPaciente: ' + (pac?.nombre || '') + '\nCédula: ' + (pac?.documento || '') + '\nTipo: ' + tipo + '\n\nSe enviará automáticamente cuando haya conexión.');
+      onDone();
       return;
     }
     if (!pac) return alert('Busque o cree el paciente');

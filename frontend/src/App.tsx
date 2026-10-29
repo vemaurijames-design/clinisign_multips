@@ -18,6 +18,9 @@ import Agenda from './pages/Agenda';
 import ConfigCorreo from './pages/ConfigCorreo';
 import Auditoria from './pages/Auditoria';
 import Plantillas from './pages/Plantillas';
+import { useEffect } from 'react';
+import { processPendingQueue } from './utils/offlineQueue';
+import { historiaClinicaService, consentimientoService } from './services/rest';
 import Notificaciones from './pages/Notificaciones';
 
 function AppRoutes() {
@@ -37,7 +40,7 @@ function AppRoutes() {
         <Route path="/reportes" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','CALIDAD','RADIOPERADOR']}><RequireIps><Reportes /></RequireIps></PrivateRoute>} />
         <Route path="/ips" element={<PrivateRoute roles={['SUPERADMIN']}><ListIps /></PrivateRoute>} />
         <Route path="/ips/create" element={<PrivateRoute roles={['SUPERADMIN']}><CreateIps /></PrivateRoute>} />
-        <Route path="/config" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','MEDICO']}><RequireIps><ConfigCorreo /></RequireIps></PrivateRoute>} />
+        <Route path="/config" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','RADIOPERADOR']}><RequireIps><ConfigCorreo /></RequireIps></PrivateRoute>} />
         <Route path="/auditoria" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','CALIDAD','MEDICO','RADIOPERADOR']}><RequireIps><Auditoria /></RequireIps></PrivateRoute>} />
         <Route path="/plantillas" element={<PrivateRoute roles={['SUPERADMIN']}><RequireIps><Plantillas /></RequireIps></PrivateRoute>} />
         <Route path="/notificaciones" element={<PrivateRoute roles={['SUPERADMIN','ADMINIPS','AUXILIAR','RADIOPERADOR','TECNICO','CALIDAD','MEDICO']}><RequireIps><Notificaciones /></RequireIps></PrivateRoute>} />
@@ -46,9 +49,31 @@ function AppRoutes() {
   );
 }
 
+function OfflineSync() {
+  const { token } = useAuth();
+  useEffect(() => {
+    if (!token) return;
+    const sync = async () => {
+      if (!navigator.onLine) return;
+      const enviados = await processPendingQueue(
+        (data) => historiaClinicaService.crear(data),
+        (data) => consentimientoService.crear(data)
+      );
+      if (enviados > 0) {
+        alert(`✓ Conexión restaurada\n\nSe enviaron ${enviados} documento(s) pendientes correctamente.\n\nLos documentos ya están disponibles en CliniSign.`);
+      }
+    };
+    sync();
+    window.addEventListener('online', sync);
+    return () => window.removeEventListener('online', sync);
+  }, [token]);
+  return null;
+}
+
 export default function App() {
   return (
     <AuthProvider>
+      <OfflineSync />
       <BrowserRouter>
         <AppRoutes />
       </BrowserRouter>

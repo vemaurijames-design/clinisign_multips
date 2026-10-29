@@ -29,8 +29,13 @@ public class HistoriaClinicaController {
     @GetMapping("/{id}/pdf")
     public ResponseEntity<byte[]> descargarPdf(@PathVariable Long id) {
         byte[] pdf = pdfService.generar(id);
+        var hc = service.obtener(id);
+        String nombre = hc.getPaciente() != null ? (hc.getPaciente().getNombre() != null ? hc.getPaciente().getNombre().replaceAll("[^a-zA-Z0-9]", "_") : "paciente") : "paciente";
+        String documento = hc.getPaciente() != null && hc.getPaciente().getDocumento() != null ? hc.getPaciente().getDocumento() : "sin_doc";
+        String codigo = hc.getCodigo() != null ? hc.getCodigo() : "HC-" + id;
+        String filename = codigo + "_" + nombre + "_" + documento + ".pdf";
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=hc_" + id + ".pdf")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdf);
     }
@@ -47,9 +52,16 @@ public class HistoriaClinicaController {
         service.activar(id);
         return ResponseEntity.ok().build();
     }
+    @PutMapping("/{id}/anular")
+    public ResponseEntity<?> anular(@PathVariable Long id) {
+        permiso.requerirRoles("SUPERADMIN", "ADMINIPS", "RADIOPERADOR");
+        service.anular(id);
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminar(@PathVariable Long id) {
-        permiso.requerirRoles("SUPERADMIN", "ADMINIPS", "RADIOPERADOR");
+        permiso.requerirRoles("SUPERADMIN");
         service.eliminar(id);
         return ResponseEntity.ok().build();
     }

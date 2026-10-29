@@ -81,6 +81,7 @@ export const historiaClinicaService = {
   crear: (data: any) => api.post('/historias-clinicas', data),
   eliminar: (id: number) => api.delete(`/historias-clinicas/${id}`),
   activar: (id: number) => api.put(`/historias-clinicas/${id}/activar`),
+  anular: (id: number) => api.put(`/historias-clinicas/${id}/anular`),
   pdfUrl: (id: number) => `${apiOrigin()}/api/historias-clinicas/${id}/pdf?${authQs()}`,
 };
 
@@ -108,9 +109,9 @@ export const consentimientoService = {
   crear: (data: any) => api.post('/consentimientos', data),
   eliminar: (id: number) => api.delete(`/consentimientos/${id}`),
   activar: (id: number) => api.put(`/consentimientos/${id}/activar`),
+  anular: (id: number) => api.put(`/consentimientos/${id}/anular`),
   enviar: (id: number, correoDestino: string) => api.post(`/consentimientos/${id}/enviar`, { correoDestino }),
-  pdfUrl: (id: number) =>
-    `${apiOrigin()}/api/consentimientos/${id}/pdf?${authQs()}`,
+  pdfUrl: (id: number) => `${apiOrigin()}/api/consentimientos/${id}/pdf?${authQs()}`,
 };
 
 export const notificacionService = {

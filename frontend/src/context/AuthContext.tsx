@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 
 interface AuthState {
   token: string | null;
@@ -47,6 +47,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.clear();
     setAuthState({ token: null, rol: null, email: null, nombre: null, ipsId: null, ipsNombre: null });
   };
+
+  // Auto-logout after 15 minutes of inactivity
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const TIMEOUT_MS = 15 * 60 * 1000;
+
+  const resetTimeout = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (auth.token) {
+      timeoutRef.current = setTimeout(() => {
+        alert('Sesión cerrada por inactividad. Inicie sesión nuevamente.');
+        logout();
+      }, TIMEOUT_MS);
+    }
+  };
+
+  useEffect(() => {
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(e => window.addEventListener(e, resetTimeout));
+    resetTimeout();
+    return () => {
+      events.forEach(e => window.removeEventListener(e, resetTimeout));
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [auth.token]);
 
   return (
     <AuthContext.Provider value={{ ...auth, setAuth, seleccionarIps, logout }}>

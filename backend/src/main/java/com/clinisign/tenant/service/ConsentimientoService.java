@@ -14,6 +14,8 @@ import com.clinisign.tenant.repository.PlantillaDocumentoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 
 import java.util.Date;
 import java.util.List;
@@ -32,6 +34,7 @@ public class ConsentimientoService {
     private final PlantillaDocumentoRepository plantillaRepo;
 
     public List<Consentimiento> listar() { return repo.findAll(); }
+    public Consentimiento obtener(Long id) { return repo.findById(id).orElseThrow(() -> new RuntimeException("No encontrado")); }
 
     public List<Consentimiento> porDocumento(String documento) {
         return repo.findByDocumentoOrderByIdDesc(documento);
@@ -179,12 +182,21 @@ public class ConsentimientoService {
         repo.save(cons);
         auditoria.registrar("CONSENTIMIENTO", "ACTIVAR", id, ActorContext.etiqueta());
     }
+    @Transactional
+    public void anular(Long id) {
+        var c = repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Consentimiento no encontrado"));
+        c.setActivo(false);
+        repo.save(c);
+        auditoria.registrar("CONSENTIMIENTO", "ANULAR", id, ActorContext.etiqueta());
+    }
+
     public void eliminar(Long id) {
         Consentimiento cons = repo.findById(id).orElseThrow(() -> new RuntimeException("No encontrado"));
-        cons.setActivo(false);
-        repo.save(cons);
+        String detalle = "Eliminado " + (cons.getTipo() != null ? cons.getTipo() : "consentimiento") + " " + (cons.getCodigo() != null ? cons.getCodigo() : id) + " por SUPERADMIN";
+        repo.delete(cons);
         try {
-            auditoria.registrar("CONSENTIMIENTO", "ANULAR", id, ActorContext.etiqueta());
+            auditoria.registrar("CONSENTIMIENTO", "ELIMINAR", id, detalle);
         } catch (Exception e) {
             log.warn("No se pudo registrar auditoría: {}", e.getMessage());
         }

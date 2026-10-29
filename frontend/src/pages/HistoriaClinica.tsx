@@ -3,6 +3,7 @@ import { ambulanciaService, historiaClinicaService, pacienteService } from '../s
 import { useAuth } from '../context/AuthContext';
 import BuscadorPaciente from '../components/BuscadorPaciente';
 import SignaturePad from '../components/SignaturePad';
+import { addPending } from '../utils/offlineQueue';
 
 const EVENTOS = ['Arrollamiento','Acc. trabajo','Acc. químico','Atrapamiento','Agresión','Autoinfligido','Caída','Ambiental','Cuerpo extraño','Electrocución','Explosión','Incendio','Enfermedad común','Golpe / impacto','Acc. tránsito'];
 const MOT_MED = ['P. cardiorespiratoria','Org. sentidos','Cardiovascular','Respiratorio','Gastrointestinal','Genitourinario','Gineco-obstétrica','Osteomuscular','Piel y anexos','Metabólica','Reacción alérgica','Obstrucción vía aérea','Psiquiátrica','Envenenamiento','Calor / frío'];
@@ -80,8 +81,10 @@ export default function HistoriaClinica() {
                 </td><td style={{color: hc.activo === false ? 'red' : 'green'}}>{hc.activo === false ? 'Anulado' : 'Activo'}</td>
                 <td>
                   <a href={historiaClinicaService.pdfUrl(hc.id)} target="_blank" rel="noreferrer"><button style={{background:'#1a5fb4',color:'#fff'}}>Ver PDF</button></a>
-                  {['SUPERADMIN','ADMINIPS','RADIOPERADOR'].includes(rol) && hc.activo !== false && <button onClick={async () => { if (confirm('¿Anular esta historia clínica? Quedará registrada en la bitácora.')) { await historiaClinicaService.eliminar(hc.id); cargar(); } }}>Anular</button>}
-                  {['SUPERADMIN','ADMINIPS','RADIOPERADOR'].includes(rol) && hc.activo === false && <button onClick={async () => { if (confirm('¿Activar?')) { await historiaClinicaService.activar(hc.id); cargar(); } }} style={{background:'#1a9f5c',color:'#fff'}}>Activar</button>}
+                  {['SUPERADMIN','ADMINIPS','RADIOPERADOR'].includes(rol) && <a href={historiaClinicaService.pdfUrl(hc.id)} download><button style={{background:'#1a9f5c',color:'#fff',marginLeft:4}}>Descargar</button></a>}
+                  {rol === 'SUPERADMIN' && <button onClick={async () => { if (confirm('¿Eliminar permanentemente esta historia clínica? El consecutivo quedará libre. Esta acción no se puede deshacer.')) { await historiaClinicaService.eliminar(hc.id); cargar(); } }} style={{background:'#dc3545',color:'#fff',marginLeft:4}}>Eliminar</button>}
+                  {['ADMINIPS','RADIOPERADOR'].includes(rol) && hc.activo !== false && <button onClick={async () => { if (confirm('¿Anular esta historia clínica? Quedará registrado en la bitácora.')) { await historiaClinicaService.anular(hc.id); cargar(); } }} style={{background:'#f59e0b',color:'#fff',marginLeft:4}}>Anular</button>}
+                  {['ADMINIPS','RADIOPERADOR'].includes(rol) && hc.activo === false && <button onClick={async () => { if (confirm('¿Activar nuevamente esta historia clínica?')) { await historiaClinicaService.activar(hc.id); cargar(); } }} style={{background:'#1a9f5c',color:'#fff',marginLeft:4}}>Activar</button>}
                 </td>
               </tr>
             ))}
@@ -107,6 +110,7 @@ function HCForm({ onSave, onCancel }: any) {
   const [pac, setPac] = useState<any>(null);
   const [alta, setAlta] = useState({ nombre: '', apellido: '', documento: '', telefono: '', tipoDocumento: 'CC', direccion: '', eps: '', genero: 'M', edad: '', fechaNacimiento: '', ocupacion: '', estadoCivil: '' });
 
+  const [autoSaved, setAutoSaved] = useState(false);
   const [form, setForm] = useState<any>({
     fechaAtencion: now.toISOString().slice(0, 10),
     horaAtencion: now.toTimeString().slice(0, 5),
@@ -127,15 +131,22 @@ function HCForm({ onSave, onCancel }: any) {
     instruccion: '', resultado: '', docAcompanante: '', nombreAcompanante: '', parentescoAcompanante: '', complicaciones: '', asignaTraslado: '',
     nombreProfesional: '', registroProfesional: '',
   });
-    // Auto-save draft
+    // Auto-save draft while filling, clear when leaving module
   useEffect(() => {
     const saved = localStorage.getItem('historiaClinicaDraft');
     if (saved) {
       try { setForm(prev => ({ ...prev, ...JSON.parse(saved) })); } catch {}
     }
+    return () => {
+      // Clear draft when leaving the module
+      localStorage.removeItem('historiaClinicaDraft');
+    };
   }, []);
   useEffect(() => {
     localStorage.setItem('historiaClinicaDraft', JSON.stringify(form));
+    setAutoSaved(true);
+    const timer = setTimeout(() => setAutoSaved(false), 2000);
+    return () => clearTimeout(timer);
   }, [form]);
   const limpiarBorrador = () => {
     localStorage.removeItem('historiaClinicaDraft');
@@ -222,9 +233,23 @@ function HCForm({ onSave, onCancel }: any) {
       return alert('Las firmas exceden 2MB. Reduzca el tamaño de las imágenes.');
     }
     if (!navigator.onLine) {
-      const draft = { pac, form, timestamp: Date.now() };
-      localStorage.setItem('hc_pending_' + Date.now(), JSON.stringify(draft));
-      alert('No tienes internet.\n\nSe guardó la historia clínica en borrador.\nSe enviará automáticamente cuando haya conexión.');
+      const payload = {
+        ...form,
+        nombreProfesional: form.profesional,
+        registroProfesional: form.registroProfesional,
+        pacienteId: pac.id,
+        motivoConsulta: [...motMed, ...motTra].join('; ') || form.tipoAtencion,
+        procedimientosRealizados: trat.join('; '),
+        enfermedadActual: `Eventos: ${eventos.join(', ')}. Cuidados: ${cuidados.join(', ')}. Lesiones: ${lesiones.join(', ')}.`,
+        detalleJson: JSON.stringify({ eventos, motMed, motTra, cuidados, lesiones, trat, placa: form.placaMovil, origen: form.origen, instruccion: form.instruccion, resultado: form.resultado, complicaciones: form.complicaciones, docAcompanante: form.docAcompanante, nombreAcompanante: form.nombreAcompanante || pac?.contactoNombre, parentescoAcompanante: form.parentescoAcompanante }),
+        firmaPaciente: firmaP.current?.toDataURL?.() || firmaP.current?.getBase64?.(),
+        firmaAcompanante: firmaA.current?.toDataURL?.() || firmaA.current?.getBase64?.(),
+        firmaProfesional: firmaH.current?.toDataURL?.() || firmaH.current?.getBase64?.(),
+      };
+      addPending('historia', payload);
+      localStorage.removeItem('historiaClinicaDraft');
+      alert('⚠ Sin conexión a internet\n\nLa historia clínica se guardó localmente.\n\nPaciente: ' + (pac?.nombre || '') + ' ' + (pac?.apellido || '') + '\nCédula: ' + (pac?.documento || '') + '\n\nSe enviará automáticamente cuando haya conexión.');
+      onCancel();
       return;
     }
     try {
@@ -435,6 +460,7 @@ function HCForm({ onSave, onCancel }: any) {
       <SignaturePad ref={firmaA} label="Firma del acompañante / responsable" />
       <SignaturePad ref={firmaH} label="Talento humano que traslada" />
       <div className="toolbar">
+        {autoSaved && <span style={{color:'#1a9f5c',fontSize:13,marginRight:12}}>✓ Autoguardado</span>}
         <button className="btn-primary" onClick={validar}>Guardar HC y generar PDF</button>
         <button type="button" onClick={() => {
           if (confirm('¿Borrar todos los datos del formulario?')) {

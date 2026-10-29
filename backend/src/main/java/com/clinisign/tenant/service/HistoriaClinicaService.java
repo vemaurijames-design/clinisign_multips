@@ -7,6 +7,8 @@ import com.clinisign.tenant.repository.PacienteRepository;
 import com.clinisign.tenant.repository.SolicitudRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.Map;
 
@@ -47,12 +49,24 @@ public class HistoriaClinicaService {
 
     public void activar(Long id) {
         HistoriaClinica hc = repo.findById(id).orElseThrow(() -> new RuntimeException("No encontrada"));
-        hc.setActivo(true); repo.save(hc);
+        hc.setActivo(true);
+        repo.save(hc);
+        auditoria.registrar("HISTORIA_CLINICA", "ACTIVAR", id, ActorContext.etiqueta());
+    }
+    @Transactional
+    public void anular(Long id) {
+        var hc = repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Historia clínica no encontrada"));
+        hc.setActivo(false);
+        repo.save(hc);
+        auditoria.registrar("HISTORIA_CLINICA", "ANULAR", id, ActorContext.etiqueta());
     }
 
     public void eliminar(Long id) {
         HistoriaClinica hc = repo.findById(id).orElseThrow(() -> new RuntimeException("No encontrada"));
-        hc.setActivo(false); repo.save(hc);
+        String detalle = "Eliminada HC " + (hc.getCodigo() != null ? hc.getCodigo() : id) + " por SUPERADMIN";
+        repo.delete(hc);
+        auditoria.registrar("HISTORIA_CLINICA", "ELIMINAR", id, detalle);
     }
 
     private void mapear(HistoriaClinica hc, Map<String, Object> b) {
