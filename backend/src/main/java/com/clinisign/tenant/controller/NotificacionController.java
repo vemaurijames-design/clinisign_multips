@@ -15,7 +15,10 @@ public class NotificacionController {
 
     @GetMapping
     public ResponseEntity<?> listar() {
-        return ResponseEntity.ok(notificacionService.listar(permiso.rolActual()));
+        // Obtenemos el rol y el nombre para pasárselos al servicio
+        String rol = permiso.rolActual();
+        String nombreUsuario = permiso.nombreActual();
+        return ResponseEntity.ok(notificacionService.listar(rol, nombreUsuario));
     }
 
     @GetMapping("/leidas")

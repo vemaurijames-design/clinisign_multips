@@ -18,8 +18,8 @@ import Agenda from './pages/Agenda';
 import ConfigCorreo from './pages/ConfigCorreo';
 import Auditoria from './pages/Auditoria';
 import Plantillas from './pages/Plantillas';
-import { useEffect } from 'react';
-import { processPendingQueue } from './utils/offlineQueue';
+import { useEffect, useState } from 'react';
+import { processPendingQueue, countPending, migrateOldPendingKeys, onlineSuccessMessage } from './utils/offlineQueue';
 import { historiaClinicaService, consentimientoService } from './services/rest';
 import Notificaciones from './pages/Notificaciones';
 
@@ -49,24 +49,51 @@ function AppRoutes() {
   );
 }
 
+/** Sincronización central de borradores offline */
 function OfflineSync() {
   const { token } = useAuth();
+  const [syncing, setSyncing] = useState(false);
+
   useEffect(() => {
     if (!token) return;
+
+    migrateOldPendingKeys();
+
     const sync = async () => {
-      if (!navigator.onLine) return;
-      const enviados = await processPendingQueue(
-        (data) => historiaClinicaService.crear(data),
-        (data) => consentimientoService.crear(data)
-      );
-      if (enviados > 0) {
-        alert(`✓ Conexión restaurada\n\nSe enviaron ${enviados} documento(s) pendientes correctamente.\n\nLos documentos ya están disponibles en CliniSign.`);
+      if (!navigator.onLine || syncing) return;
+      const pendientes = countPending();
+      if (pendientes === 0) return;
+
+      setSyncing(true);
+      try {
+        const { enviados } = await processPendingQueue(
+          (data) => historiaClinicaService.crear(data),
+          (data) => consentimientoService.crear(data)
+        );
+        if (enviados > 0) {
+          alert(onlineSuccessMessage(enviados));
+        }
+      } catch (e) {
+        console.warn('Error sincronizando cola offline', e);
+      } finally {
+        setSyncing(false);
       }
     };
+
     sync();
     window.addEventListener('online', sync);
-    return () => window.removeEventListener('online', sync);
+
+    // Reintento cada 30 segundos (útil en móviles)
+    const interval = setInterval(() => {
+      if (navigator.onLine && countPending() > 0) sync();
+    }, 30000);
+
+    return () => {
+      window.removeEventListener('online', sync);
+      clearInterval(interval);
+    };
   }, [token]);
+
   return null;
 }
 

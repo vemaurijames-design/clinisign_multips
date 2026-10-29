@@ -2,14 +2,15 @@ package com.clinisign.tenant.service;
 
 import com.clinisign.config.ActorContext;
 import com.clinisign.tenant.entity.Ambulancia;
+import com.clinisign.tenant.entity.Notificacion;
 import com.clinisign.tenant.entity.Paciente;
 import com.clinisign.tenant.entity.SolicitudServicio;
 import com.clinisign.tenant.repository.AmbulanciaRepository;
+import com.clinisign.tenant.repository.NotificacionRepository;
 import com.clinisign.tenant.repository.PacienteRepository;
 import com.clinisign.tenant.repository.SolicitudRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,7 @@ public class SolicitudService {
     private final PacienteRepository pacRepo;
     private final AmbulanciaRepository ambRepo;
     private final NotificacionService notificacionService;
+    private final NotificacionRepository notificacionRepo;
     private final AuditoriaService auditoria;
 
     public List<SolicitudServicio> listar() { return repo.findAll(); }
@@ -49,12 +51,14 @@ public class SolicitudService {
         }
         if (body.get("asignadoA") != null) s.setAsignadoA(str(body.get("asignadoA")));
         s = repo.save(s);
+
         auditoria.registrar("SOLICITUDES", "CREAR", s.getId(), s.getOrigen() + " → " + s.getDestino());
-        aviso("AUXILIAR", "Nueva llamada de traslado",
-                "Radio " + s.getRadioperador() + " registró " + s.getPrioridad()
-                        + ". Paciente: " + nombrePac(s) + ". Origen: " + s.getOrigen() + " → " + s.getDestino()
-                        + ". Espere asignación de móvil y APH.");
-        aviso("RADIOPERADOR", "Solicitud creada", "Quedó " + s.getConsecutivo() + " en PENDIENTE.");
+
+        // Envía aviso a Auxiliares, Médicos, Radio y Admin
+        aviso("AUXILIAR", "Nueva llamada de traslado", "Radio " + s.getRadioperador() + " registró " + s.getPrioridad() + ". Paciente: " + nombrePac(s) + ".", s.getId());
+        aviso("MEDICO", "Nueva llamada de traslado", "Radio " + s.getRadioperador() + " registró " + s.getPrioridad() + ". Paciente: " + nombrePac(s) + ".", s.getId());
+        aviso("RADIOPERADOR", "Solicitud creada", "Quedó " + s.getConsecutivo() + " en PENDIENTE.", s.getId());
+        aviso("ADMINIPS", "Solicitud creada", "Quedó " + s.getConsecutivo() + " en PENDIENTE.", s.getId());
         return s;
     }
 
@@ -67,6 +71,7 @@ public class SolicitudService {
         if (body.containsKey("observaciones")) s.setObservaciones(str(body.get("observaciones")));
         if (body.containsKey("radioperador")) s.setRadioperador(str(body.get("radioperador")));
         if (body.containsKey("asignadoA")) s.setAsignadoA(str(body.get("asignadoA")));
+
         Object ambId = body.get("ambulanciaId");
         if (ambId != null && !ambId.toString().isBlank()) {
             Ambulancia a = ambRepo.findById(Long.valueOf(ambId.toString())).orElseThrow();
@@ -75,22 +80,24 @@ public class SolicitudService {
             s.setHoraAsignacion(new Date());
             a.setEstado("EN_SERVICIO");
             ambRepo.save(a);
-            String msg = (s.getAsignadoA() != null ? s.getAsignadoA() + ". " : "")
-                    + s.getConsecutivo() + " móvil " + a.getPlaca()
-                    + ". Paciente " + nombrePac(s)
-                    + ". Recoger en " + s.getOrigen() + " y dejar en " + s.getDestino()
-                    + ". Prioridad " + s.getPrioridad() + ".";
-            aviso("AUXILIAR", "Traslado asignado a usted", msg);
-            aviso("MEDICO", "Traslado asignado a usted", msg);
-            aviso("RADIOPERADOR", "Servicio asignado", s.getConsecutivo() + " → " + a.getPlaca() + " / " + s.getAsignadoA());
+
+            String msg = (s.getAsignadoA() != null ? s.getAsignadoA() + ". " : "") + s.getConsecutivo() + " móvil " + a.getPlaca() + ". Paciente " + nombrePac(s) + ".";
+            aviso("AUXILIAR", "Traslado asignado a usted", msg, s.getId());
+            aviso("MEDICO", "Traslado asignado a usted", msg, s.getId());
+            aviso("RADIOPERADOR", "Servicio asignado", s.getConsecutivo() + " → " + a.getPlaca(), s.getId());
+            aviso("ADMINIPS", "Servicio asignado", s.getConsecutivo() + " → " + a.getPlaca(), s.getId());
         }
+
         if (body.containsKey("estado")) {
             String estado = str(body.get("estado"));
             s.setEstado(estado);
+
             if ("EN_RUTA".equals(estado)) {
                 s.setHoraSalida(new Date());
-                aviso("RADIOPERADOR", "APH en ruta", nombrePac(s) + " salió en " + (s.getAmbulancia() != null ? s.getAmbulancia().getPlaca() : "móvil"));
+                aviso("RADIOPERADOR", "APH en ruta", nombrePac(s) + " salió.", s.getId());
+                aviso("ADMINIPS", "APH en ruta", nombrePac(s) + " salió.", s.getId());
             }
+
             if ("COMPLETADA".equals(estado) || "ENTREGADO".equals(estado)) {
                 s.setEstado("COMPLETADA");
                 s.setHoraLlegada(new Date());
@@ -98,30 +105,52 @@ public class SolicitudService {
                     s.getAmbulancia().setEstado("DISPONIBLE");
                     ambRepo.save(s.getAmbulancia());
                 }
-                aviso("RADIOPERADOR", "Paciente entregado", nombrePac(s) + " quedó en " + s.getDestino() + ".");
-                aviso("AUXILIAR", "Servicio cerrado", s.getConsecutivo() + " completado.");
+
+                // ✅ LIMPIAR NOTIFICACIONES DE TODOS LOS ROLES
+                marcarNotificacionesComoLeidas(s.getId());
+
+                // Aviso final (opcional, por si quieres que quede registro)
+                aviso("RADIOPERADOR", "Servicio Completado", "El traslado " + s.getConsecutivo() + " ha finalizado.", s.getId());
             }
+
             if ("CANCELADA".equals(estado)) {
                 s.setHoraLlegada(new Date());
                 if (s.getAmbulancia() != null) {
                     s.getAmbulancia().setEstado("DISPONIBLE");
                     ambRepo.save(s.getAmbulancia());
                 }
-                aviso("AUXILIAR", "Servicio cancelado", s.getConsecutivo() + " fue cancelado por radio.");
+
+                // ✅ LIMPIAR NOTIFICACIONES DE TODOS LOS ROLES
+                marcarNotificacionesComoLeidas(s.getId());
+
+                aviso("RADIOPERADOR", "Servicio Cancelado", "El traslado " + s.getConsecutivo() + " ha sido cancelado.", s.getId());
             }
         }
         return repo.save(s);
     }
 
-    private void aviso(String rol, String titulo, String mensaje) {
-        try { notificacionService.crear(rol, titulo, mensaje, "SOLICITUD"); }
-        catch (Exception ignored) {}
+    // ✅ Esta función barre TODAS las notificaciones de esa solicitud, sin importar el rol, y las marca leídas.
+    private void marcarNotificacionesComoLeidas(Long solicitudId) {
+        try {
+            List<Notificacion> notis = notificacionRepo.findByEntidadId(solicitudId);
+            for (Notificacion n : notis) {
+                n.setLeida(true);
+                notificacionRepo.save(n);
+            }
+        } catch (Exception e) {
+            System.err.println("Error marcando notificaciones: " + e.getMessage());
+        }
+    }
+
+    private void aviso(String rol, String titulo, String mensaje, Long entidadId) {
+        try {
+            notificacionService.crearNotificacion(rol, titulo, mensaje, entidadId, "SOLICITUD");
+        } catch (Exception ignored) {}
     }
 
     private String nombrePac(SolicitudServicio s) {
         if (s.getPaciente() == null) return "sin paciente";
-        return (s.getPaciente().getNombre() == null ? "" : s.getPaciente().getNombre()) + " "
-                + (s.getPaciente().getApellido() == null ? "" : s.getPaciente().getApellido());
+        return (s.getPaciente().getNombre() == null ? "" : s.getPaciente().getNombre()) + " " + (s.getPaciente().getApellido() == null ? "" : s.getPaciente().getApellido());
     }
 
     public void eliminar(Long id) { repo.deleteById(id); }

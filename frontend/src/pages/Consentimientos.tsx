@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { consentimientoService, pacienteService, plantillaService } from '../services/rest';
 import SignaturePad from '../components/SignaturePad';
 import BuscadorPaciente from '../components/BuscadorPaciente';
-import { addPending } from '../utils/offlineQueue';
+import { addPending, offlineMessage } from '../utils/offlineQueue';
 import { useAuth } from '../context/AuthContext';
 
 const CONS = [
@@ -20,28 +20,6 @@ const DES = [
 ];
 
 export default function Consentimientos() {
-  // Enviar borradores automáticamente cuando hay conexión
-  useEffect(() => {
-    const enviarBorradores = async () => {
-      if (!navigator.onLine) return;
-      const keys = Object.keys(localStorage).filter(k => k.startsWith('consent_pending_'));
-      for (const key of keys) {
-        try {
-          const data = JSON.parse(localStorage.getItem(key) || '{}');
-          if (data.pacienteId) {
-            await consentimientoService.crear(data);
-            localStorage.removeItem(key);
-          }
-        } catch {}
-      }
-      if (keys.length > 0) {
-        alert('✓ ' + keys.length + ' consentimiento(s) enviado(s) automáticamente');
-        cargar();
-      }
-    };
-    window.addEventListener('online', enviarBorradores);
-    return () => window.removeEventListener('online', enviarBorradores);
-  }, []);
   const { rol } = useAuth();
   const [params] = useSearchParams();
   const [items, setItems] = useState<any[]>([]);
@@ -51,8 +29,11 @@ export default function Consentimientos() {
   const [tipoNuevo, setTipoNuevo] = useState<'CONSENTIMIENTO' | 'DESISTIMIENTO'>('CONSENTIMIENTO');
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [filtro, setFiltro] = useState('');
+
   const cargar = () => consentimientoService.listar().then(r => setItems(r.data || [])).catch(() => setItems([]));
+
   useEffect(() => { cargar(); }, []);
+
   useEffect(() => {
     const t = (params.get('tipo') || '').toUpperCase();
     if (t === 'CONSENTIMIENTO' || t === 'DESISTIMIENTO') {
@@ -60,23 +41,63 @@ export default function Consentimientos() {
       setShow(true);
     }
   }, [params]);
+
+  const isConsentActive = show && tipoNuevo === 'CONSENTIMIENTO';
+  const isDesistActive = show && tipoNuevo === 'DESISTIMIENTO';
+  const isFormClosed = !show;
+
+  const btnBaseStyle: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 20px', fontSize: '14px', fontWeight: 'bold',
+    cursor: 'pointer', borderRadius: '6px', border: '1px solid #0b63c8', transition: 'all 0.2s ease-in-out'
+  };
+
+  const btnConsStyle = {
+    ...btnBaseStyle,
+    backgroundColor: (isFormClosed || isConsentActive) ? '#0b63c8' : '#ffffff',
+    color: (isFormClosed || isConsentActive) ? '#ffffff' : '#0b63c8',
+  };
+
+  const btnDesStyle = {
+    ...btnBaseStyle,
+    backgroundColor: (isFormClosed || isDesistActive) ? '#0b63c8' : '#ffffff',
+    color: (isFormClosed || isDesistActive) ? '#ffffff' : '#0b63c8',
+  };
+
   return (
     <div>
-      <div className="page-head">
+      <div className="page-head" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
         <div>
-          <h2>Consentimiento y desistimiento</h2>
-          <p className="hint">Se carga la plantilla ACTIVA de esta IPS. El auxiliar solo llena paciente y firma; el texto legal sale de esa plantilla. Luego se genera el PDF.</p>
+          <h2 style={{ margin: 0 }}>Consentimiento y desistimiento</h2>
+          <p className="hint" style={{ margin: '5px 0 0 0' }}>Se carga la plantilla ACTIVA de esta IPS. El auxiliar solo llena paciente y firma; el texto legal sale de esa plantilla. Luego se genera el PDF.</p>
         </div>
-        <div className="toolbar">
-          <button className="btn-primary" onClick={() => { setTipoNuevo('CONSENTIMIENTO'); setShow(true); }}>Consentimiento HC-FM-04</button>
-          <button onClick={() => { setTipoNuevo('DESISTIMIENTO'); setShow(true); }}>Desistimiento HC-FM-06</button>
+
+        <div className="toolbar" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <button onClick={() => { setTipoNuevo('CONSENTIMIENTO'); setShow(true); }} style={btnConsStyle}>
+            <span style={{ fontSize: '18px', lineHeight: '1' }}>+</span>
+            Crear Consentimiento <span style={{ opacity: 0.8, fontSize: '12px', fontWeight: 'normal', marginLeft: '4px' }}>(HC-FM-04)</span>
+          </button>
+
+          <button onClick={() => { setTipoNuevo('DESISTIMIENTO'); setShow(true); }} style={btnDesStyle}>
+            <span style={{ fontSize: '18px', lineHeight: '1' }}>+</span>
+            Crear Desistimiento <span style={{ opacity: 0.8, fontSize: '12px', fontWeight: 'normal', marginLeft: '4px' }}>(HC-FM-06)</span>
+          </button>
         </div>
       </div>
+
       {show && <DocumentoSian tipo={tipoNuevo} onDone={() => { setShow(false); cargar(); }} onCancel={() => setShow(false)} />}
-      <div className="toolbar">
-        <input placeholder="Buscar por cédula o tipo" value={filtro} onChange={e => setFiltro(e.target.value)} />
-        <button type="button" className="btn-primary">Buscar</button>
-      </div>
+
+      {!show && (
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+          <input
+            placeholder="Buscar por cédula o tipo..."
+            value={filtro}
+            onChange={e => setFiltro(e.target.value)}
+            style={{ flex: 1, padding: '10px 15px', border: '1px solid #ccc', borderRadius: '6px', fontSize: '14px', outline: 'none' }}
+          />
+          <button type="button" className="btn-primary" style={{ padding: '10px 24px', borderRadius: '6px', fontWeight: 'bold', fontSize: '14px' }}>Buscar</button>
+        </div>
+      )}
+
       {pdfUrl && (
         <div className="card" style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.5)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center'}}>
           <div style={{background:'#fff',borderRadius:12,padding:20,width:'90%',maxWidth:900,height:'80vh',display:'flex',flexDirection:'column'}}>
@@ -91,54 +112,59 @@ export default function Consentimientos() {
           </div>
         </div>
       )}
-      <div className="table-wrap">
-        <table className="data-table">
-          <thead><tr><th>Consecutivo</th><th>Fecha</th><th>Tipo</th><th>Código</th><th>Documento</th><th>Profesional</th><th>Firmado</th><th>Estado</th><th>Correo</th><th></th></tr></thead>
-          <tbody>
-            {items.filter(c => !filtro || JSON.stringify(c).toLowerCase().includes(filtro.toLowerCase())).sort((a, b) => new Date(a.fechaCreacion || 0).getTime() - new Date(b.fechaCreacion || 0).getTime()).slice((page - 1) * perPage, page * perPage).map(c => (
-              <tr key={c.id}>
-                <td>{c.codigo}-{String(c.consecutivo || c.id).padStart(4, '0')}</td>
-                <td>{c.fechaCreacion ? new Date(c.fechaCreacion).toLocaleDateString() : '—'}</td>
-                <td>{c.tipo}</td><td>{c.codigo}</td><td>{c.documento}</td>
-                <td>{c.nombreAuxiliar || c.nombreProfesional || c.aux || '—'}<br/><small style={{color:'#666'}}>REG: {c.registroAuxiliar || c.registroProfesional || c.reg || '—'}</small></td>
-                <td>{c.firmado ? 'Sí' : 'No'}</td><td style={{color: c.activo === false ? 'red' : 'green'}}>{c.activo === false ? 'Anulado' : 'Activo'}</td>
-                <td>{c.correoEnviado ? c.correoDestino : '—'}</td>
-                <td>
-                  <button onClick={() => setPdfUrl(consentimientoService.pdfUrl(c.id))}>Ver PDF</button>
-                  {['SUPERADMIN','ADMINIPS','RADIOPERADOR'].includes(rol) && <a href={consentimientoService.pdfUrl(c.id)} download style={{marginLeft:4}}><button>Descargar</button></a>}
-                  {['SUPERADMIN','ADMINIPS','RADIOPERADOR'].includes(rol) && <button onClick={async () => {
-                    const correo = prompt('Correo de destino (vacío = correo de la IPS):') || '';
-                    const dest = correo || 'correo institucional de la IPS';
-                    if (!confirm(`¿Enviar el documento a ${dest}?\n\nEste envío cumple con la Ley 1581 de 2012 de protección de datos personales. El documento contiene información confidencial del paciente.`)) return;
-                    try {
-                      await consentimientoService.enviar(c.id, correo);
-                      alert('✓ Correo enviado correctamente\n\nDestino: ' + dest + '\n\nEl documento fue enviado y registrado en la bitácora.');
-                      cargar();
-                    } catch (e: any) {
-                      if (!navigator.onLine) {
-                        alert('⚠ Sin conexión\n\nEl correo se enviará automáticamente cuando haya internet.');
-                      } else {
-                        alert('✗ No se pudo enviar\n\nVerifique la configuración de correo en Configuración IPS.');
-                      }
-                    }
-                  }}>Enviar</button>}
-                  {rol === 'SUPERADMIN' && <button onClick={async () => { if (confirm('¿Eliminar permanentemente este consentimiento? El consecutivo quedará libre. Esta acción no se puede deshacer.')) { await consentimientoService.eliminar(c.id); cargar(); } }} style={{background:'#dc3545',color:'#fff',marginLeft:4}}>Eliminar</button>}
-                  {['ADMINIPS','RADIOPERADOR'].includes(rol) && c.activo !== false && <button onClick={async () => { if (confirm('¿Anular este consentimiento? Quedará registrado en la bitácora.')) { await consentimientoService.anular(c.id); cargar(); } }} style={{background:'#f59e0b',color:'#fff',marginLeft:4}}>Anular</button>}
-                  {['ADMINIPS','RADIOPERADOR'].includes(rol) && c.activo === false && <button onClick={async () => { if (confirm('¿Activar nuevamente este consentimiento?')) { await consentimientoService.activar(c.id); cargar(); } }} style={{background:'#1a9f5c',color:'#fff',marginLeft:4}}>Activar</button>}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'linear-gradient(180deg, #f8f9fa 0%, #fff 100%)', borderTop: '1px solid #e0e0e0', padding: '10px 16px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8, zIndex: 100, boxShadow: '0 -2px 10px rgba(0,0,0,0.05)' }}>
-          <span style={{ color: '#1a5fb4', fontSize: 12, fontWeight: 500 }}>{items.length} registros</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <button disabled={page === 1} onClick={() => setPage(p => p - 1)} style={{ padding: '6px 12px', borderRadius: 6, border: 'none', background: page === 1 ? '#e8e8e8' : '#1a5fb4', color: page === 1 ? '#999' : '#fff', cursor: page === 1 ? 'not-allowed' : 'pointer', fontWeight: 500, fontSize: 12 }}>← Ant</button>
-            <span style={{ fontWeight: 600, color: '#333', fontSize: 13 }}>{page}/{Math.ceil(items.length / perPage) || 1}</span>
-            <button disabled={page * perPage >= items.length} onClick={() => setPage(p => p + 1)} style={{ padding: '6px 12px', borderRadius: 6, border: 'none', background: page * perPage >= items.length ? '#e8e8e8' : '#1a5fb4', color: page * perPage >= items.length ? '#999' : '#fff', cursor: page * perPage >= items.length ? 'not-allowed' : 'pointer', fontWeight: 500, fontSize: 12 }}>Sig →</button>
+
+      {!show && (
+        <div className="table-wrap" style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+          <table className="data-table" style={{ width: '100%', minWidth: '1100px', borderCollapse: 'collapse' }}>
+            <thead><tr style={{ background: '#0b63c8', color: '#fff', textAlign: 'left' }}><th style={{ padding: '12px' }}>Consecutivo</th><th style={{ padding: '12px' }}>Fecha</th><th style={{ padding: '12px' }}>Tipo</th><th style={{ padding: '12px' }}>Código</th><th style={{ padding: '12px' }}>Documento</th><th style={{ padding: '12px' }}>Profesional</th><th style={{ padding: '12px' }}>Firmado</th><th style={{ padding: '12px' }}>Estado</th><th style={{ padding: '12px' }}>Correo</th><th style={{ padding: '12px' }}></th></tr></thead>
+            <tbody>
+              {items.filter(c => !filtro || JSON.stringify(c).toLowerCase().includes(filtro.toLowerCase())).sort((a, b) => new Date(a.fechaCreacion || 0).getTime() - new Date(b.fechaCreacion || 0).getTime()).slice((page - 1) * perPage, page * perPage).map(c => (
+                <tr key={c.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                  <td style={{ padding: '12px' }}>{c.codigo}-{String(c.consecutivo || c.id).padStart(4, '0')}</td>
+                  <td style={{ padding: '12px' }}>{c.fechaCreacion ? new Date(c.fechaCreacion).toLocaleDateString() : '—'}</td>
+                  <td style={{ padding: '12px' }}>{c.tipo}</td><td style={{ padding: '12px' }}>{c.codigo}</td><td style={{ padding: '12px' }}>{c.documento}</td>
+                  <td style={{ padding: '12px' }}>{c.nombreAuxiliar || c.nombreProfesional || c.aux || '—'}<br/><small style={{color:'#666'}}>REG: {c.registroAuxiliar || c.registroProfesional || c.reg || '—'}</small></td>
+                  <td style={{ padding: '12px' }}>{c.firmado ? 'Sí' : 'No'}</td><td style={{ padding: '12px' }}><span style={{ color: c.activo === false ? '#EF4444' : '#10B981', fontWeight: 'bold' }}>{c.activo === false ? 'Anulado' : 'Activo'}</span></td>
+                  <td style={{ padding: '12px' }}>{c.correoEnviado ? c.correoDestino : '—'}</td>
+                  <td style={{ padding: '12px' }}>
+                    <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                      <button onClick={() => setPdfUrl(consentimientoService.pdfUrl(c.id))} style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #0b63c8', background: '#0b63c8', color: '#fff', cursor: 'pointer', fontWeight: 'bold' }}>Ver PDF</button>
+                      {['SUPERADMIN','ADMINIPS','RADIOPERADOR'].includes(rol) && <a href={consentimientoService.pdfUrl(c.id)} download style={{marginLeft:4}}><button style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #10B981', background: '#f0fdf4', color: '#10B981', cursor: 'pointer' }}>Descargar</button></a>}
+                      {['SUPERADMIN','ADMINIPS','RADIOPERADOR'].includes(rol) && <button onClick={async () => {
+                        const correo = prompt('Correo de destino (vacío = correo de la IPS):') || '';
+                        const dest = correo || 'correo institucional de la IPS';
+                        if (!confirm(`¿Enviar el documento a ${dest}?\n\nEste envío cumple con la Ley 1581 de 2012 de protección de datos personales. El documento contiene información confidencial del paciente.`)) return;
+                        try {
+                          await consentimientoService.enviar(c.id, correo);
+                          alert('✓ Correo enviado correctamente\n\nDestino: ' + dest + '\n\nEl documento fue enviado y registrado en la bitácora.');
+                          cargar();
+                        } catch (e: any) {
+                          if (!navigator.onLine) {
+                            alert('⚠ Sin conexión\n\nEl correo se enviará automáticamente cuando haya internet.');
+                          } else {
+                            alert('✗ No se pudo enviar\n\nVerifique la configuración de correo en Configuración IPS.');
+                          }
+                        }
+                      }} style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer' }}>Enviar</button>}
+                      {rol === 'SUPERADMIN' && <button onClick={async () => { if (confirm('¿Eliminar permanentemente este consentimiento? El consecutivo quedará libre. Esta acción no se puede deshacer.')) { await consentimientoService.eliminar(c.id); cargar(); } }} style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #fca5a5', background: '#fef2f2', color: '#EF4444', cursor: 'pointer' }}>Eliminar</button>}
+                      {['ADMINIPS','RADIOPERADOR'].includes(rol) && c.activo !== false && <button onClick={async () => { if (confirm('¿Anular este consentimiento? Quedará registrado en la bitácora.')) { await consentimientoService.anular(c.id); cargar(); } }} style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #fcd34d', background: '#fffbeb', color: '#F59E0B', cursor: 'pointer' }}>Anular</button>}
+                      {['ADMINIPS','RADIOPERADOR'].includes(rol) && c.activo === false && <button onClick={async () => { if (confirm('¿Activar nuevamente este consentimiento?')) { await consentimientoService.activar(c.id); cargar(); } }} style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #86efac', background: '#f0fdf4', color: '#10B981', cursor: 'pointer' }}>Activar</button>}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', background: '#f8f9fa', borderTop: '1px solid #e9ecef', borderRadius: '0 0 8px 8px' }}>
+            <span style={{ color: '#6b7280', fontSize: 13, fontWeight: 500 }}>{items.length} registros</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
+              <button disabled={page === 1} onClick={() => setPage(p => p - 1)} style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #d1d5db', background: page === 1 ? '#f3f4f6' : '#ffffff', color: page === 1 ? '#9ca3af' : '#374151', cursor: page === 1 ? 'not-allowed' : 'pointer' }}>← Ant</button>
+              <span style={{ fontWeight: 'bold', color: '#111827', fontSize: 13 }}>Página {page} de {Math.ceil(items.length / perPage) || 1}</span>
+              <button disabled={page * perPage >= items.length} onClick={() => setPage(p => p + 1)} style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #d1d5db', background: page * perPage >= items.length ? '#f3f4f6' : '#ffffff', color: page * perPage >= items.length ? '#9ca3af' : '#374151', cursor: page * perPage >= items.length ? 'not-allowed' : 'pointer' }}>Sig →</button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -157,7 +183,6 @@ function DocumentoSian({ tipo, onDone, onCancel }: { tipo: string; onDone: () =>
   const [aux, setAux] = useState('');
   const [cedulaAux, setCedulaAux] = useState('');
   const [reg, setReg] = useState('');
-  const [docAux, setDocAux] = useState('');
   const [leido, setLeido] = useState(false);
   const [hora] = useState(new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }));
   const [fecha] = useState(new Date().toLocaleDateString('es-CO'));
@@ -167,6 +192,7 @@ function DocumentoSian({ tipo, onDone, onCancel }: { tipo: string; onDone: () =>
   const lista = tipo === 'DESISTIMIENTO' ? DES : CONS;
   const [plantilla, setPlantilla] = useState<any>(null);
   const codigo = plantilla?.codigo || (tipo === 'DESISTIMIENTO' ? 'HC-FM-06' : 'HC-FM-04');
+
   useEffect(() => {
     plantillaService.porTipo(tipo).then(r => setPlantilla(r.data)).catch(() => setPlantilla(null));
   }, [tipo]);
@@ -179,37 +205,29 @@ function DocumentoSian({ tipo, onDone, onCancel }: { tipo: string; onDone: () =>
 
   const guardar = async () => {
     if (!confirm('Este documento contiene información confidencial del paciente conforme a la Ley 1581 de 2012.\n\n¿Confirma que desea guardar el consentimiento/desistimiento?')) return;
+
     if (!navigator.onLine) {
+      const firma = firmaRef.current?.toDataURL?.() || firmaRef.current?.getBase64?.();
+      const huella = huellaRef.current?.toDataURL?.() || huellaRef.current?.getBase64?.();
+      const firmaProf = firmaProfRef.current?.toDataURL?.() || firmaProfRef.current?.getBase64?.();
+
       const payload = {
-        tipo,
-        codigo,
-        plantillaId: plantilla?.id,
-        beneficios: plantilla?.beneficios,
-        riesgos: plantilla?.riesgos,
-        alternativas: plantilla?.alternativas,
-        observaciones: plantilla?.textoLegal,
-        documento: pac?.documento,
-        telefono: pac?.telefono,
-        calidad: calidad + (responsableDe ? ' de ' + responsableDe : ''),
-        procedimientos: [...procs, otro].filter(Boolean).join('; '),
-        nombreAcompanante: acomp,
-        nombreAuxiliar: aux,
-        cedulaAuxiliar: cedulaAux,
-        documentoAuxiliar: cedulaAux,
-        registroAuxiliar: reg,
-        firmaProfesional: firmaProf,
-        documentoAcompanante: docAcomp,
-        parentescoAcompanante: parentescoAcomp,
-        firma,
-        huella,
-        huellaDigital: huella,
-        firmado: true,
+        tipo, codigo, plantillaId: plantilla?.id, beneficios: plantilla?.beneficios, riesgos: plantilla?.riesgos, alternativas: plantilla?.alternativas, observaciones: plantilla?.textoLegal,
+        documento: pac?.documento, telefono: pac?.telefono, calidad: calidad + (responsableDe ? ' de ' + responsableDe : ''), procedimientos: [...procs, otro].filter(Boolean).join('; '),
+        nombreAcompanante: acomp, nombreAuxiliar: aux, cedulaAuxiliar: cedulaAux, documentoAuxiliar: cedulaAux, registroAuxiliar: reg, firmaProfesional: firmaProf,
+        documentoAcompanante: docAcomp, parentescoAcompanante: parentescoAcomp, firma, huella, huellaDigital: huella, firmado: true,
       };
-      addPending('consentimiento', payload);
-      alert('⚠ Sin conexión a internet\n\nEl consentimiento se guardó localmente.\n\nPaciente: ' + (pac?.nombre || '') + '\nCédula: ' + (pac?.documento || '') + '\nTipo: ' + tipo + '\n\nSe enviará automáticamente cuando haya conexión.');
+
+      addPending('consentimiento', payload, {
+        pacienteNombre: `${pac?.nombre || ''} ${pac?.apellido || ''}`.trim(), pacienteDocumento: pac?.documento || '',
+        tipoDocumento: tipo === 'DESISTIMIENTO' ? 'Desistimiento' : 'Consentimiento',
+      });
+
+      alert(offlineMessage(tipo === 'DESISTIMIENTO' ? 'desistimiento' : 'consentimiento', `${pac?.nombre || ''} ${pac?.apellido || ''}`.trim() + (pac?.documento ? ` (${pac.documento})` : '')));
       onDone();
       return;
     }
+
     if (!pac) return alert('Busque o cree el paciente');
     if (!leido) return alert('Debe confirmar que el paciente leyó el documento');
     if (!aux?.trim()) return alert('El nombre del profesional es obligatorio');
@@ -218,48 +236,24 @@ function DocumentoSian({ tipo, onDone, onCancel }: { tipo: string; onDone: () =>
     if (!acomp?.trim()) return alert('El nombre del acompañante es obligatorio');
     if (!docAcomp?.trim()) return alert('La cédula del acompañante es obligatoria');
     if (!parentescoAcomp?.trim()) return alert('El parentesco es obligatorio');
+
     const firma = firmaRef.current?.toDataURL?.() || firmaRef.current?.getBase64?.();
     const huella = huellaRef.current?.toDataURL?.() || huellaRef.current?.getBase64?.();
     const firmaProf = firmaProfRef.current?.toDataURL?.() || firmaProfRef.current?.getBase64?.();
-    if (!aux || !cedulaAux) { alert('Nombre y cédula del profesional son obligatorios'); return; }
+
     if ((!firma || String(firma).length < 80) && (!huella || String(huella).length < 80)) {
       return alert('Debe firmar o colocar la huella en el recuadro.');
     }
+
     try {
-      if (!navigator.onLine) {
-        const draft = { tipo, pac, acomp, docAcomp, parentescoAcomp, aux, cedulaAux, reg, procs, otro, fecha: new Date().toISOString() };
-        localStorage.setItem('clinisign_consent_draft_' + Date.now(), JSON.stringify(draft));
-        alert('✓ Sin conexión. Consentimiento guardado localmente. Se enviará cuando haya internet.');
-        onDone();
-        return;
-      }
-      const result = await consentimientoService.crear({
-        tipo,
-        codigo,
-        plantillaId: plantilla?.id,
-        beneficios: plantilla?.beneficios,
-        riesgos: plantilla?.riesgos,
-        alternativas: plantilla?.alternativas,
-        observaciones: plantilla?.textoLegal,
-        documento: pac.documento,
-          telefono: pac.telefono,
-        calidad: calidad + (responsableDe ? ' de ' + responsableDe : ''),
-        procedimientos: [...procs, otro].filter(Boolean).join('; '),
-        nombreAcompanante: acomp,
-        nombreAuxiliar: aux,
-        cedulaAuxiliar: cedulaAux,
-        documentoAuxiliar: cedulaAux,
-        registroAuxiliar: reg,
-        firmaProfesional: firmaProf,
-        documentoAcompanante: docAcomp,
-        parentescoAcompanante: parentescoAcomp,
-        firma,
-        huella,
-        huellaDigital: huella,
-        firmado: true,
+      await consentimientoService.crear({
+        tipo, codigo, plantillaId: plantilla?.id, beneficios: plantilla?.beneficios, riesgos: plantilla?.riesgos, alternativas: plantilla?.alternativas, observaciones: plantilla?.textoLegal,
+        documento: pac.documento, telefono: pac.telefono, calidad: calidad + (responsableDe ? ' de ' + responsableDe : ''), procedimientos: [...procs, otro].filter(Boolean).join('; '),
+        nombreAcompanante: acomp, nombreAuxiliar: aux, cedulaAuxiliar: cedulaAux, documentoAuxiliar: cedulaAux, registroAuxiliar: reg, firmaProfesional: firmaProf,
+        documentoAcompanante: docAcomp, parentescoAcompanante: parentescoAcomp, firma, huella, huellaDigital: huella, firmado: true,
       });
       onDone();
-    alert('Consentimiento del paciente ' + (pac?.nombre || '') + ' ' + (pac?.apellido || '') + ' enviado a CliniSign.');
+      alert('Consentimiento del paciente ' + (pac?.nombre || '') + ' ' + (pac?.apellido || '') + ' enviado a CliniSign.');
     } catch (e: any) {
       alert(e.response?.data?.message || 'Error al guardar. Revise la consola del backend.');
     }
@@ -288,7 +282,7 @@ function DocumentoSian({ tipo, onDone, onCancel }: { tipo: string; onDone: () =>
             <input placeholder="Documento *" value={alta.documento} onChange={e => setAlta({ ...alta, documento: e.target.value })} />
             <input placeholder="Teléfono" value={alta.telefono} onChange={e => setAlta({ ...alta, telefono: e.target.value })} />
           </div>
-          <button type="button" onClick={crearPac}>Registrar paciente</button>
+          <button type="button" onClick={crearPac} style={{ padding: '8px 16px', borderRadius: '6px', background: '#0b63c8', color: '#fff', border: 'none', fontWeight: 'bold', marginTop: '10px', cursor: 'pointer' }}>Registrar paciente</button>
         </>
       )}
 
@@ -367,25 +361,16 @@ function DocumentoSian({ tipo, onDone, onCancel }: { tipo: string; onDone: () =>
       <label>Nombre del profesional que genera el documento (*)<input className="linea" value={aux} onChange={e => setAux(e.target.value)} placeholder="Nombre completo" required /></label>
       <label>Cédula del profesional (*)<input className="linea" value={cedulaAux} onChange={e => setCedulaAux(e.target.value)} placeholder="Número de cédula" required /></label>
       <label>Registro profesional (*)<input className="linea" value={reg} onChange={e => setReg(e.target.value)} placeholder="Registro" required /></label>
-      <div className="toolbar">
-        <button className="btn-primary" onClick={guardar}>Guardar, generar PDF y almacenar</button>
+      <div className="toolbar" style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+        <button className="btn-primary" onClick={guardar} style={{ padding: '10px 20px', borderRadius: '6px', fontWeight: 'bold' }}>Guardar, generar PDF y almacenar</button>
         <button onClick={() => {
           setPac(null);
           setAlta({ nombre: '', apellido: '', documento: '', telefono: '', tipoDocumento: 'CC' });
-          setAcomp('');
-          setDocAcomp('');
-          setParentescoAcomp('');
-          setAux('');
-          setCedulaAux('');
-          setReg('');
-          setProcs([]);
-          setOtro('');
-          firmaRef.current?.clear?.();
-          huellaRef.current?.clear?.();
-          firmaProfRef.current?.clear?.();
+          setAcomp(''); setDocAcomp(''); setParentescoAcomp(''); setAux(''); setCedulaAux(''); setReg(''); setProcs([]); setOtro('');
+          firmaRef.current?.clear?.(); huellaRef.current?.clear?.(); firmaProfRef.current?.clear?.();
           alert('✓ Formulario limpiado');
-        }} style={{background:'#dc3545',color:'#fff'}}>Limpiar formulario</button>
-        <button onClick={onCancel}>Cancelar</button>
+        }} style={{ background: '#fef2f2', border: '1px solid #fca5a5', color: '#EF4444', padding: '10px 20px', borderRadius: '6px', fontWeight: 'bold' }}>Limpiar formulario</button>
+        <button onClick={onCancel} style={{ padding: '10px 20px', borderRadius: '6px', fontWeight: 'bold', background: '#f3f4f6', border: '1px solid #d1d5db', color: '#374151' }}>Cancelar</button>
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ import { ambulanciaService, historiaClinicaService, pacienteService } from '../s
 import { useAuth } from '../context/AuthContext';
 import BuscadorPaciente from '../components/BuscadorPaciente';
 import SignaturePad from '../components/SignaturePad';
-import { addPending } from '../utils/offlineQueue';
+import { addPending, offlineMessage } from '../utils/offlineQueue';
 
 const EVENTOS = ['Arrollamiento','Acc. trabajo','Acc. químico','Atrapamiento','Agresión','Autoinfligido','Caída','Ambiental','Cuerpo extraño','Electrocución','Explosión','Incendio','Enfermedad común','Golpe / impacto','Acc. tránsito'];
 const MOT_MED = ['P. cardiorespiratoria','Org. sentidos','Cardiovascular','Respiratorio','Gastrointestinal','Genitourinario','Gineco-obstétrica','Osteomuscular','Piel y anexos','Metabólica','Reacción alérgica','Obstrucción vía aérea','Psiquiátrica','Envenenamiento','Calor / frío'];
@@ -41,65 +41,97 @@ export default function HistoriaClinica() {
   const [q, setQ] = useState('');
   const [buscado, setBuscado] = useState('');
   const { rol } = useAuth();
+
   const cargar = async () => {
     const hcs = await historiaClinicaService.listar();
     setHistorias((hcs.data || []).sort((a: any, b: any) => new Date(a.fechaAtencion || 0).getTime() - new Date(b.fechaAtencion || 0).getTime()));
   };
+
   useEffect(() => { cargar(); }, []);
+
   const filtrados = historias.filter(hc => !buscado || `${hc.paciente?.nombre} ${hc.paciente?.apellido} ${hc.paciente?.documento}`.toLowerCase().includes(buscado.toLowerCase()));
   const totalPaginas = Math.ceil(filtrados.length / porPagina);
   const vis = filtrados.slice((pagina - 1) * porPagina, pagina * porPagina);
+
   return (
     <div>
-      <div className="page-head">
+      <div className="page-head" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
         <div>
-          <h2>Historia clínica HC-FM-05</h2>
-          <p className="hint">Formato SIAN páginas 1 y 2. Llene por módulos. El PDF sale con los mismos bloques.</p>
+          <h2 style={{ margin: 0 }}>Historia clínica HC-FM-05</h2>
+          <p className="hint" style={{ margin: '5px 0 0 0' }}>Formato SIAN páginas 1 y 2. Llene por módulos. El PDF sale con los mismos bloques.</p>
         </div>
-        <button className="btn-primary" onClick={() => setShowForm(true)}>Nueva HC</button>
+        <button className="btn-primary" onClick={() => setShowForm(true)} style={{ padding: '10px 20px', borderRadius: '6px', fontWeight: 'bold', fontSize: '14px' }}>
+          + Nueva HC
+        </button>
       </div>
-      <div className="toolbar">
-        <input placeholder="Buscar paciente o cédula" value={q} onChange={e => setQ(e.target.value)} />
-        <button type="button" className="btn-primary" onClick={() => setBuscado(q)}>Buscar</button>
-      </div>
-      {showForm && <HCForm onSave={async (data: any) => {
-        await historiaClinicaService.crear(data); localStorage.removeItem('hc_borrador'); setShowForm(false); cargar();
-      }} onCancel={() => setShowForm(false)} />}
-      <div className="table-wrap">
-        <table className="data-table">
-          <thead><tr><th>Consec.</th><th>Fecha</th><th>Paciente</th><th>Clasificación</th><th>Motivo</th><th>Profesional</th><th>Estado</th><th></th></tr></thead>
-          <tbody>
-            {vis.map(hc => (
-              <tr key={hc.id}>
-                <td style={{fontFamily:'monospace',fontWeight:500}}>{hc.codigo || 'HC-FM-05-' + String(hc.consecutivo || 0).padStart(4, '0')}</td><td>{hc.fechaAtencion ? new Date(hc.fechaAtencion).toLocaleString() : ''}</td>
-                <td>{hc.paciente?.nombre} {hc.paciente?.apellido} {hc.paciente?.documento}</td>
-                <td>{hc.tipoAtencion}</td>
-                <td>{hc.motivoConsulta?.substring(0, 60)}</td>
-                <td style={{fontWeight:500}}>
-                  <div>{hc.nombreProfesional || hc.profesional || '—'}</div>
-                  {hc.registroProfesional && <div style={{fontSize:11,color:'#666'}}>REG: {hc.registroProfesional}</div>}
-                </td><td style={{color: hc.activo === false ? 'red' : 'green'}}>{hc.activo === false ? 'Anulado' : 'Activo'}</td>
-                <td>
-                  <a href={historiaClinicaService.pdfUrl(hc.id)} target="_blank" rel="noreferrer"><button style={{background:'#1a5fb4',color:'#fff'}}>Ver PDF</button></a>
-                  {['SUPERADMIN','ADMINIPS','RADIOPERADOR'].includes(rol) && <a href={historiaClinicaService.pdfUrl(hc.id)} download><button style={{background:'#1a9f5c',color:'#fff',marginLeft:4}}>Descargar</button></a>}
-                  {rol === 'SUPERADMIN' && <button onClick={async () => { if (confirm('¿Eliminar permanentemente esta historia clínica? El consecutivo quedará libre. Esta acción no se puede deshacer.')) { await historiaClinicaService.eliminar(hc.id); cargar(); } }} style={{background:'#dc3545',color:'#fff',marginLeft:4}}>Eliminar</button>}
-                  {['ADMINIPS','RADIOPERADOR'].includes(rol) && hc.activo !== false && <button onClick={async () => { if (confirm('¿Anular esta historia clínica? Quedará registrado en la bitácora.')) { await historiaClinicaService.anular(hc.id); cargar(); } }} style={{background:'#f59e0b',color:'#fff',marginLeft:4}}>Anular</button>}
-                  {['ADMINIPS','RADIOPERADOR'].includes(rol) && hc.activo === false && <button onClick={async () => { if (confirm('¿Activar nuevamente esta historia clínica?')) { await historiaClinicaService.activar(hc.id); cargar(); } }} style={{background:'#1a9f5c',color:'#fff',marginLeft:4}}>Activar</button>}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <div style={{position:'fixed',bottom:0,left:0,right:0,background:'linear-gradient(180deg,#f8f9fa 0%,#fff 100%)',borderTop:'1px solid #e8e8e8',padding:'10px 16px',display:'flex',flexWrap:'wrap',justifyContent:'space-between',alignItems:'center',gap:8,zIndex:100}}>
-          <span style={{color:'#1a5fb4',fontSize:12,fontWeight:500}}>{filtrados.length} registros</span>
-          <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
-            <button disabled={pagina === 1} onClick={() => setPagina(p => p - 1)} style={{padding:'6px 12px',borderRadius:6,border:'none',background:pagina===1?'#e8e8e8':'#1a5fb4',color:pagina===1?'#999':'#fff',cursor:pagina===1?'not-allowed':'pointer',fontWeight:500,fontSize:12}}>← Ant</button>
-            <span style={{fontWeight:600,color:'#333',fontSize:13}}>{pagina}/{totalPaginas || 1}</span>
-            <button disabled={pagina === totalPaginas || totalPaginas === 0} onClick={() => setPagina(p => p + 1)} style={{padding:'6px 12px',borderRadius:6,border:'none',background:(pagina===totalPaginas||totalPaginas===0)?'#e8e8e8':'#1a5fb4',color:(pagina===totalPaginas||totalPaginas===0)?'#999':'#fff',cursor:(pagina===totalPaginas||totalPaginas===0)?'not-allowed':'pointer',fontWeight:500,fontSize:12}}>Sig →</button>
+
+      {!showForm && (
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+          <input
+            placeholder="Buscar paciente o cédula..."
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') setBuscado(q); }}
+            style={{ flex: 1, padding: '10px 15px', border: '1px solid #ccc', borderRadius: '6px', fontSize: '14px', outline: 'none' }}
+          />
+          <button type="button" className="btn-primary" onClick={() => setBuscado(q)} style={{ padding: '10px 24px', borderRadius: '6px', fontWeight: 'bold', fontSize: '14px' }}>
+            Buscar
+          </button>
+        </div>
+      )}
+
+      {showForm && (
+        <HCForm
+          onSave={async (data: any) => {
+            await historiaClinicaService.crear(data);
+            localStorage.removeItem('hc_borrador');
+            setShowForm(false);
+            cargar();
+          }}
+          onCancel={() => setShowForm(false)}
+        />
+      )}
+
+      {!showForm && (
+        <div className="table-wrap" style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+          <table className="data-table" style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse' }}>
+            <thead><tr style={{ background: '#0b63c8', color: '#fff', textAlign: 'left' }}><th style={{ padding: '12px' }}>Consec.</th><th style={{ padding: '12px' }}>Fecha</th><th style={{ padding: '12px' }}>Paciente</th><th style={{ padding: '12px' }}>Clasificación</th><th style={{ padding: '12px' }}>Motivo</th><th style={{ padding: '12px' }}>Profesional</th><th style={{ padding: '12px' }}>Estado</th><th style={{ padding: '12px' }}></th></tr></thead>
+            <tbody>
+              {vis.map(hc => (
+                <tr key={hc.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                  <td style={{ padding: '12px', fontFamily: 'monospace', fontWeight: 500 }}>{hc.codigo || 'HC-FM-05-' + String(hc.consecutivo || 0).padStart(4, '0')}</td>
+                  <td style={{ padding: '12px' }}>{hc.fechaAtencion ? new Date(hc.fechaAtencion).toLocaleString() : ''}</td>
+                  <td style={{ padding: '12px' }}>{hc.paciente?.nombre} {hc.paciente?.apellido} {hc.paciente?.documento}</td>
+                  <td style={{ padding: '12px' }}>{hc.tipoAtencion}</td>
+                  <td style={{ padding: '12px' }}>{hc.motivoConsulta?.substring(0, 60)}</td>
+                  <td style={{ padding: '12px', fontWeight: 500 }}>
+                    <div>{hc.nombreProfesional || hc.profesional || '—'}</div>
+                    {hc.registroProfesional && <div style={{ fontSize: 11, color: '#666' }}>REG: {hc.registroProfesional}</div>}
+                  </td>
+                  <td style={{ padding: '12px' }}><span style={{ color: hc.activo === false ? '#EF4444' : '#10B981', fontWeight: 'bold' }}>{hc.activo === false ? 'Anulado' : 'Activo'}</span></td>
+                  <td style={{ padding: '12px' }}>
+                    <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                      <a href={historiaClinicaService.pdfUrl(hc.id)} target="_blank" rel="noreferrer"><button style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #0b63c8', background: '#0b63c8', color: '#fff', cursor: 'pointer', fontWeight: 'bold' }}>Ver PDF</button></a>
+                      {['SUPERADMIN','ADMINIPS','RADIOPERADOR'].includes(rol) && <a href={historiaClinicaService.pdfUrl(hc.id)} download><button style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #10B981', background: '#f0fdf4', color: '#10B981', cursor: 'pointer' }}>Descargar</button></a>}
+                      {rol === 'SUPERADMIN' && <button onClick={async () => { if (confirm('¿Eliminar permanentemente esta historia clínica? El consecutivo quedará libre. Esta acción no se puede deshacer.')) { await historiaClinicaService.eliminar(hc.id); cargar(); } }} style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #fca5a5', background: '#fef2f2', color: '#EF4444', cursor: 'pointer' }}>Eliminar</button>}
+                      {['ADMINIPS','RADIOPERADOR'].includes(rol) && hc.activo !== false && <button onClick={async () => { if (confirm('¿Anular esta historia clínica? Quedará registrado en la bitácora.')) { await historiaClinicaService.anular(hc.id); cargar(); } }} style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #fcd34d', background: '#fffbeb', color: '#F59E0B', cursor: 'pointer' }}>Anular</button>}
+                      {['ADMINIPS','RADIOPERADOR'].includes(rol) && hc.activo === false && <button onClick={async () => { if (confirm('¿Activar nuevamente esta historia clínica?')) { await historiaClinicaService.activar(hc.id); cargar(); } }} style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #86efac', background: '#f0fdf4', color: '#10B981', cursor: 'pointer' }}>Activar</button>}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', background: '#f8f9fa', borderTop: '1px solid #e9ecef', borderRadius: '0 0 8px 8px' }}>
+            <span style={{ color: '#6b7280', fontSize: 13, fontWeight: 500 }}>{filtrados.length} registros</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
+              <button disabled={pagina === 1} onClick={() => setPagina(p => p - 1)} style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #d1d5db', background: pagina === 1 ? '#f3f4f6' : '#ffffff', color: pagina === 1 ? '#9ca3af' : '#374151', cursor: pagina === 1 ? 'not-allowed' : 'pointer' }}>← Ant</button>
+              <span style={{ fontWeight: 'bold', color: '#111827', fontSize: 13 }}>Página {pagina} de {totalPaginas || 1}</span>
+              <button disabled={pagina === totalPaginas || totalPaginas === 0} onClick={() => setPagina(p => p + 1)} style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #d1d5db', background: (pagina === totalPaginas || totalPaginas === 0) ? '#f3f4f6' : '#ffffff', color: (pagina === totalPaginas || totalPaginas === 0) ? '#9ca3af' : '#374151', cursor: (pagina === totalPaginas || totalPaginas === 0) ? 'not-allowed' : 'pointer' }}>Sig →</button>
+            </div>
           </div>
         </div>
-        <div style={{height:60}}></div>
-      </div>
+      )}
     </div>
   );
 }
@@ -131,49 +163,21 @@ function HCForm({ onSave, onCancel }: any) {
     instruccion: '', resultado: '', docAcompanante: '', nombreAcompanante: '', parentescoAcompanante: '', complicaciones: '', asignaTraslado: '',
     nombreProfesional: '', registroProfesional: '',
   });
-    // Auto-save draft while filling, clear when leaving module
+
   useEffect(() => {
     const saved = localStorage.getItem('historiaClinicaDraft');
     if (saved) {
       try { setForm(prev => ({ ...prev, ...JSON.parse(saved) })); } catch {}
     }
-    return () => {
-      // Clear draft when leaving the module
-      localStorage.removeItem('historiaClinicaDraft');
-    };
+    return () => { localStorage.removeItem('historiaClinicaDraft'); };
   }, []);
+
   useEffect(() => {
     localStorage.setItem('historiaClinicaDraft', JSON.stringify(form));
     setAutoSaved(true);
     const timer = setTimeout(() => setAutoSaved(false), 2000);
     return () => clearTimeout(timer);
   }, [form]);
-  const limpiarBorrador = () => {
-    localStorage.removeItem('historiaClinicaDraft');
-    setForm({
-      fechaAtencion: new Date().toISOString().slice(0, 10),
-      horaAtencion: new Date().toTimeString().slice(0, 5),
-      horaDespacho: new Date().toTimeString().slice(0, 5),
-      horaLlegada: new Date().toTimeString().slice(0, 5),
-      horaSalida: new Date().toTimeString().slice(0, 5),
-      placaMovil: '', origen: '', destino1: '', destino2: '',
-      tipoAtencion: 'Urgencia', conductor: '', tripulante: '', tipoAseguramiento: '', tipoTraslado: '',
-      ta: '', fc: '', fr: '', temp: '', spo2: '', glasgow: '', glucometria: '',
-      ta2: '', fc2: '', fr2: '', temp2: '', spo2b: '', glasgow2: '',
-      taEntrega: '', fcEntrega: '', frEntrega: '', spo2Entrega: '', tempEntrega: '', glucEntrega: '', glasgowEntrega: '',
-      nombreEntrega: '', cedulaEntrega: '', nombreReceptor: '', cedulaReceptor: '',
-      viaAerea: 'Permeable', respiracion: 'Normal', circulacion: 'Estable',
-      piel: 'Normal', hemo: 'Estable', peso: '', talla: '',
-      alergias: 'NO', medicamentosActuales: 'NO', antecedentesPersonales: 'NO',
-      antecedentesQuirurgicos: 'NO', fumador: 'NO', alcohol: 'NO', spa: 'NO',
-      cie10Principal: '', tratamiento: '', evolucion: '', destinoPaciente: '',
-      instruccion: '', resultado: '', docAcompanante: '', nombreAcompanante: '', parentescoAcompanante: '', complicaciones: '', asignaTraslado: '',
-      nombreProfesional: '', registroProfesional: '',
-    });
-    setEventos([]); setMotMed([]); setMotTra([]); setCuidados([]); setLesiones([]); setTrat([]);
-    setPac(null);
-    alert('Formulario limpiado. Puede empezar de nuevo.');
-  };
 
   const [eventos, setEventos] = useState<string[]>([]);
   const [motMed, setMotMed] = useState<string[]>([]);
@@ -182,22 +186,22 @@ function HCForm({ onSave, onCancel }: any) {
   const [lesiones, setLesiones] = useState<string[]>([]);
   const [trat, setTrat] = useState<string[]>([]);
   const [moviles, setMoviles] = useState<any[]>([]);
+
   useEffect(() => { ambulanciaService.listar().then(r => setMoviles(r.data || [])).catch(() => {}); }, []);
+
   const firmaP = useRef<any>(null);
   const firmaA = useRef<any>(null);
   const firmaH = useRef<any>(null);
+
   const set = (k: string, v: string) => {
     const next = { ...form, [k]: v };
-    // Auto-completar entrega con datos del profesional
-    // Sincronizar siempre con quien entrega
     if (k === 'profesional') next.nombreEntrega = v;
     if (k === 'cedulaProfesional') next.cedulaEntrega = v;
     if (k === 'registroProfesional') next.registroEntrega = v;
     setForm(next);
     try { localStorage.setItem('hc_borrador', JSON.stringify(next)); } catch {}
   };
-  // Formulario inicia en blanco
-  // Enviar borrador automáticamente cuando hay conexión
+
   useEffect(() => {
     const enviarBorrador = async () => {
       const saved = localStorage.getItem('hc_borrador');
@@ -215,6 +219,7 @@ function HCForm({ onSave, onCancel }: any) {
     window.addEventListener('online', enviarBorrador);
     return () => window.removeEventListener('online', enviarBorrador);
   }, []);
+
   const validar = async () => {
     if (!pac?.id) return alert('Busque y elija el paciente');
     if (!form.ta || !form.fc) return alert('TA y FC del examen físico son obligatorios');
@@ -222,7 +227,7 @@ function HCForm({ onSave, onCancel }: any) {
     if (!form.cedulaProfesional?.trim()) return alert('La cédula del profesional es obligatoria');
     if (!form.registroProfesional?.trim()) return alert('El registro profesional es obligatorio');
     if (!confirm('Este documento contiene información confidencial del paciente conforme a la Ley 1581 de 2012 y la Resolución 1995 de 1999.\n\n¿Autoriza guardar y generar el PDF?')) return;
-    // Validar tamaño de firmas (máximo 2MB total)
+
     const firmas = [
       firmaP.current?.toDataURL?.() || '',
       firmaA.current?.toDataURL?.() || '',
@@ -232,6 +237,7 @@ function HCForm({ onSave, onCancel }: any) {
     if (totalSize > 2 * 1024 * 1024) {
       return alert('Las firmas exceden 2MB. Reduzca el tamaño de las imágenes.');
     }
+
     if (!navigator.onLine) {
       const payload = {
         ...form,
@@ -241,17 +247,39 @@ function HCForm({ onSave, onCancel }: any) {
         motivoConsulta: [...motMed, ...motTra].join('; ') || form.tipoAtencion,
         procedimientosRealizados: trat.join('; '),
         enfermedadActual: `Eventos: ${eventos.join(', ')}. Cuidados: ${cuidados.join(', ')}. Lesiones: ${lesiones.join(', ')}.`,
-        detalleJson: JSON.stringify({ eventos, motMed, motTra, cuidados, lesiones, trat, placa: form.placaMovil, origen: form.origen, instruccion: form.instruccion, resultado: form.resultado, complicaciones: form.complicaciones, docAcompanante: form.docAcompanante, nombreAcompanante: form.nombreAcompanante || pac?.contactoNombre, parentescoAcompanante: form.parentescoAcompanante }),
+        detalleJson: JSON.stringify({
+          eventos, motMed, motTra, cuidados, lesiones, trat,
+          placa: form.placaMovil, origen: form.origen,
+          instruccion: form.instruccion, resultado: form.resultado,
+          complicaciones: form.complicaciones,
+          docAcompanante: form.docAcompanante,
+          nombreAcompanante: form.nombreAcompanante || pac?.contactoNombre,
+          parentescoAcompanante: form.parentescoAcompanante
+        }),
         firmaPaciente: firmaP.current?.toDataURL?.() || firmaP.current?.getBase64?.(),
         firmaAcompanante: firmaA.current?.toDataURL?.() || firmaA.current?.getBase64?.(),
         firmaProfesional: firmaH.current?.toDataURL?.() || firmaH.current?.getBase64?.(),
       };
-      addPending('historia', payload);
-      localStorage.removeItem('historiaClinicaDraft');
-      alert('⚠ Sin conexión a internet\n\nLa historia clínica se guardó localmente.\n\nPaciente: ' + (pac?.nombre || '') + ' ' + (pac?.apellido || '') + '\nCédula: ' + (pac?.documento || '') + '\n\nSe enviará automáticamente cuando haya conexión.');
+
+      addPending('historia', payload, {
+        pacienteNombre: `${pac?.nombre || ''} ${pac?.apellido || ''}`.trim(),
+        pacienteDocumento: pac?.documento || '',
+        tipoDocumento: 'Historia clínica',
+      });
+
+      try {
+        localStorage.removeItem('historiaClinicaDraft');
+        localStorage.removeItem('hc_borrador');
+      } catch {}
+
+      alert(offlineMessage(
+        'historia clínica',
+        `${pac?.nombre || ''} ${pac?.apellido || ''}`.trim() + (pac?.documento ? ` (${pac.documento})` : '')
+      ));
       onCancel();
       return;
     }
+
     try {
       await onSave({
         ...form,
@@ -261,16 +289,24 @@ function HCForm({ onSave, onCancel }: any) {
         motivoConsulta: [...motMed, ...motTra].join('; ') || form.tipoAtencion,
         procedimientosRealizados: trat.join('; '),
         enfermedadActual: `Eventos: ${eventos.join(', ')}. Cuidados: ${cuidados.join(', ')}. Lesiones: ${lesiones.join(', ')}.`,
-        detalleJson: JSON.stringify({ eventos, motMed, motTra, cuidados, lesiones, trat, placa: form.placaMovil, origen: form.origen, instruccion: form.instruccion, resultado: form.resultado, complicaciones: form.complicaciones, docAcompanante: form.docAcompanante, nombreAcompanante: form.nombreAcompanante || pac?.contactoNombre, parentescoAcompanante: form.parentescoAcompanante }),
+        detalleJson: JSON.stringify({
+          eventos, motMed, motTra, cuidados, lesiones, trat,
+          placa: form.placaMovil, origen: form.origen,
+          instruccion: form.instruccion, resultado: form.resultado,
+          complicaciones: form.complicaciones,
+          docAcompanante: form.docAcompanante,
+          nombreAcompanante: form.nombreAcompanante || pac?.contactoNombre,
+          parentescoAcompanante: form.parentescoAcompanante
+        }),
         firmaPaciente: firmaP.current?.toDataURL?.() || firmaP.current?.getBase64?.(),
         firmaAcompanante: firmaA.current?.toDataURL?.() || firmaA.current?.getBase64?.(),
         firmaProfesional: firmaH.current?.toDataURL?.() || firmaH.current?.getBase64?.(),
       });
-      alert('✓ Historia clínica guardada correctamente\n\nPaciente: ' + (pac?.nombre || '') + ' ' + (pac?.apellido || '') + '\n\nEl PDF está disponible en la lista.');
     } catch (e: any) {
-      alert('✗ Error al guardar\n\n' + (e.response?.data?.message || 'Intente nuevamente'));
+      alert(e.response?.data?.message || 'Error al guardar la historia clínica.');
     }
   };
+
   return (
     <div className="card">
       <h3>HC-FM-05 · Versión 01 · Enero 2024</h3>
@@ -304,7 +340,7 @@ function HCForm({ onSave, onCancel }: any) {
             if (!alta.nombre || !alta.documento) return alert('Nombre y documento obligatorios');
             const { data } = await pacienteService.crear({ ...alta, edad: alta.edad ? Number(alta.edad) : null });
             setPac(data);
-          }}>Registrar paciente y usarlo en la HC</button>
+          }} style={{ padding: '8px 16px', borderRadius: '6px', background: '#0b63c8', color: '#fff', border: 'none', fontWeight: 'bold', marginTop: '10px', cursor: 'pointer' }}>Registrar paciente y usarlo en la HC</button>
         </div>
       )}
       {pac && (
@@ -450,7 +486,7 @@ function HCForm({ onSave, onCancel }: any) {
         <input placeholder="Cédula quien recibe" value={form.cedulaReceptor} onChange={e => set('cedulaReceptor', e.target.value)} />
       </div>
 
-            <h4>Acompañante / responsable</h4>
+      <h4>Acompañante / responsable</h4>
       <div className="form-grid">
         <input placeholder="Nombre del acompañante" value={form.nombreAcompanante} onChange={e => set('nombreAcompanante', e.target.value)} />
         <input placeholder="Cédula del acompañante *" value={form.docAcompanante} onChange={e => set('docAcompanante', e.target.value)} />
@@ -461,7 +497,7 @@ function HCForm({ onSave, onCancel }: any) {
       <SignaturePad ref={firmaH} label="Talento humano que traslada" />
       <div className="toolbar">
         {autoSaved && <span style={{color:'#1a9f5c',fontSize:13,marginRight:12}}>✓ Autoguardado</span>}
-        <button className="btn-primary" onClick={validar}>Guardar HC y generar PDF</button>
+        <button className="btn-primary" onClick={validar} style={{ padding: '10px 20px', borderRadius: '6px', fontWeight: 'bold' }}>Guardar HC y generar PDF</button>
         <button type="button" onClick={() => {
           if (confirm('¿Borrar todos los datos del formulario?')) {
             setForm({
@@ -484,8 +520,8 @@ function HCForm({ onSave, onCancel }: any) {
             firmaH.current?.clear?.();
             alert('✓ Formulario limpiado');
           }
-        }} style={{marginLeft:8,background:'#dc3545',color:'#fff'}}>Limpiar formulario</button>
-        <button onClick={onCancel}>Cancelar</button>
+        }} style={{ marginLeft: 8, background: '#fef2f2', border: '1px solid #fca5a5', color: '#EF4444', padding: '10px 20px', borderRadius: '6px', fontWeight: 'bold' }}>Limpiar formulario</button>
+        <button onClick={onCancel} style={{ padding: '10px 20px', borderRadius: '6px', fontWeight: 'bold', background: '#f3f4f6', border: '1px solid #d1d5db', color: '#374151' }}>Cancelar</button>
       </div>
     </div>
   );

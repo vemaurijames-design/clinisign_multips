@@ -117,6 +117,7 @@ export const consentimientoService = {
 export const notificacionService = {
   listar: () => api.get('/notificaciones'),
   leida: (id: number) => api.put(`/notificaciones/${id}/leida`),
+  marcarLeida: (id: number) => api.put(`/notificaciones/${id}/leida`), // ✅ Agregada
 };
 
 export const auditoriaService = {

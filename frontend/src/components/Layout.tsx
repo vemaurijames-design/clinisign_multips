@@ -9,34 +9,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [ipsList, setIpsList] = useState<any[]>([]);
   const [notis, setNotis] = useState<any[]>([]);
-  const [showNotis, setShowNotis] = useState(false);
+
+  const cargarAvisos = () => {
+    if (!ipsId || ipsId === 'null') return;
+    notificacionService.listar().then(r => setNotis(r.data || [])).catch(() => {});
+  };
 
   useEffect(() => {
-    const retryPending = async () => {
-      const keys = Object.keys(localStorage).filter(k => k.startsWith('hc_pending_') || k.startsWith('consent_pending_'));
-      if (keys.length === 0) return;
-      for (const key of keys) {
-        try {
-          const draft = JSON.parse(localStorage.getItem(key) || '{}');
-          if (key.startsWith('hc_pending_') && draft.form && draft.pacId) {
-            await historiaClinicaService.crear({ ...draft.form, pacienteId: draft.pacId });
-            localStorage.removeItem(key);
-            alert('Historia clínica pendiente enviada a CliniSign. Revise el módulo de historias.');
-          }
-          if (key.startsWith('consent_pending_') && draft.pac) {
-            await consentimientoService.crear(draft);
-            localStorage.removeItem(key);
-            alert('Consentimiento pendiente enviado a CliniSign. Revise el módulo de consentimientos.');
-          }
-        } catch (e) {
-          console.warn('No se pudo enviar pendiente:', key);
-        }
-      }
-    };
-    window.addEventListener('online', retryPending);
-    retryPending();
-    return () => window.removeEventListener('online', retryPending);
-  }, []);
+    cargarAvisos();
+    const interval = setInterval(cargarAvisos, 15000); // Actualiza cada 15s
+    return () => clearInterval(interval);
+  }, [ipsId]);
 
   useEffect(() => {
     if (rol === 'SUPERADMIN') {
@@ -46,17 +29,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     } else if (ipsId && ipsId !== 'null') {
       ipsService.obtener(Number(ipsId)).then(r => setIpsList([r.data])).catch(() => {});
     }
-  }, [rol]);
+  }, [rol, ipsId]);
 
-  useEffect(() => {
-    const load = () => {
-      if (!ipsId || ipsId === 'null') return;
-      notificacionService.listar().then(r => setNotis(r.data || [])).catch(() => {});
-    };
-    load();
-    const t = setInterval(load, 15000);
-    return () => clearInterval(t);
-  }, [ipsId]);
+  // Filtro estricto para el contador
+  const avisosPendientes = notis.filter(n => {
+    if (n.leida) return false;
+    const texto = `${n.titulo || ''} ${n.mensaje || ''}`.toLowerCase();
+    if (texto.includes('cerrado') || texto.includes('completad') || texto.includes('cancelad')) return false;
+    return texto.includes('traslado') || texto.includes('llamada') || texto.includes('asignado');
+  });
 
   return (
     <div className="app-shell">
@@ -66,9 +47,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <nav className="navbar">
           <div className="navbar-left" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button className="menu-btn btn-ghost" onClick={() => setOpen(v => !v)}>☰</button>
-
-            {/* ICONO Y TEXTO EN LA BARRA SUPERIOR */}
-            <img src="/logo-clinisign.png" alt="Icon" style={{ height: '28px', width: '28px', objectFit: 'cover', borderRadius: '5px' }} />
+            <img src="/logo-clinisign.png" alt="CliniSign" style={{ height: '30px', objectFit: 'contain' }} />
             <strong style={{ fontSize: '18px' }}>CliniSign</strong>
 
             {ipsList.find((i: any) => String(i.id) === String(ipsId))?.logoUrl && (
@@ -82,7 +61,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   const found = ipsList.find((i: any) => String(i.id) === e.target.value);
                   if (found) seleccionarIps(String(found.id), found.nombre);
                 }}
-                style={{ maxWidth: 260, marginLeft: '10px' }}
+                style={{ maxWidth: 260, marginLeft: '10px', padding: '5px', borderRadius: '4px', border: 'none' }}
               >
                 <option value="">Seleccionar IPS de trabajo</option>
                 {ipsList.map((ips: any) => (
@@ -90,30 +69,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 ))}
               </select>
             ) : (
-              ipsNombre && <span style={{ marginLeft: '10px' }}>{ipsNombre}</span>
+              ipsNombre && <span style={{ marginLeft: '10px', fontWeight: '500' }}>{ipsNombre}</span>
             )}
           </div>
-          <div className="navbar-right">
-            <a href="/notificaciones" style={{color:'inherit',textDecoration:'none'}}>
-              <button className="btn-ghost" type="button">Avisos {notis.filter((n: any) => !n.leida).length || ''}</button>
+
+          <div className="navbar-right" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <a href="/notificaciones" style={{ textDecoration: 'none' }}>
+              <button className="btn-ghost" type="button" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}>
+                Avisos {avisosPendientes.length > 0 ? avisosPendientes.length : ''}
+              </button>
             </a>
-            <span>{nombre} ({rol})</span>
-            <button className="btn-ghost" onClick={() => { logout(); window.location.reload(); }}>Salir</button>
+            <span style={{ fontSize: '14px' }}>{nombre} ({rol})</span>
+            <button className="btn-ghost" onClick={() => { logout(); window.location.reload(); }} style={{ background: '#fff', color: '#333', padding: '6px 16px', borderRadius: '6px', fontWeight: 'bold' }}>Salir</button>
           </div>
         </nav>
-        {showNotis && (
-          <div className="card" style={{ margin: '8px 16px' }}>
-            <strong>Notificaciones</strong>
-            {(notis || []).length === 0 && <p className="hint">Sin avisos en esta IPS.</p>}
-            {(notis || []).slice(0, 8).map((n: any) => (
-              <p key={n.id} className="hint">{n.titulo}: {n.mensaje}</p>
-            ))}
-          </div>
-        )}
+
         <main className="main">{children}</main>
+
         <footer className="footer">
-          CliniSign © {new Date().getFullYear()} — Diseño y desarrollo: JM Ingeniero, Medellín, Colombia. Todos los derechos reservados.
-          Historia clínica y consentimientos según Ley 23 de 1981, Res. 1995 de 1999 y Res. 3100 de 2019.
+          CliniSign © {new Date().getFullYear()} — Diseño y desarrollo: JM Ingeniero.
         </footer>
       </div>
     </div>

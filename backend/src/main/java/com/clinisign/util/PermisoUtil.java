@@ -85,4 +85,12 @@ public class PermisoUtil {
             throw new RuntimeException("Solo ADMINIPS, RADIOPERADOR o SUPERADMIN pueden configurar. Rol actual: " + rolActual());
         }
     }
+
+    // ✅ AGREGADO: Obtener el nombre del usuario logueado desde el token
+    public String nombreActual() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) return "Sistema";
+        return auth.getName(); // Retorna el email o nombre con el que se loguea
+    }
+
 }
