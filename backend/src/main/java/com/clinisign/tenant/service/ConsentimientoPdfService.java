@@ -102,15 +102,15 @@ public class ConsentimientoPdfService {
 
             // CONTENIDO
             if (esDesistimiento) {
-                doc.add(new Paragraph("En el presente documento manifiesto que he sido informado por parte del personal Auxiliar de Enfermería/APH de " + ipsNombre + " sobre mis problemas de salud o los de mi representado, sus características y manifestaciones principales, las posibles alternativas de tratamiento, las eventuales complicaciones que se deriven de los mismos, acerca de los riesgos y beneficios de los procedimientos planeados y los riesgos del no tratamiento.").setFontSize(8).setMarginTop(6).setTextAlignment(TextAlignment.JUSTIFIED));
-                doc.add(new Paragraph("Por tal motivo, DECIDO CONSCIENTEMENTE NO SOMETERME a los siguientes procedimientos sugeridos por el Auxiliar de Enfermería/APH que realiza el transporte:").setFontSize(8).setMarginTop(4).setBold());
+                doc.add(new Paragraph("En el presente documento manifiesto que he sido informado por parte del personal profesional de salud de " + ipsNombre + " sobre mis problemas de salud o los de mi representado, sus características y manifestaciones principales, las posibles alternativas de tratamiento, las eventuales complicaciones que se deriven de los mismos, acerca de los riesgos y beneficios de los procedimientos planeados y los riesgos del no tratamiento.").setFontSize(8).setMarginTop(6).setTextAlignment(TextAlignment.JUSTIFIED));
+                doc.add(new Paragraph("Por tal motivo, DECIDO CONSCIENTEMENTE NO SOMETERME a los siguientes procedimientos sugeridos por el profesional de salud que realiza el transporte:").setFontSize(8).setMarginTop(4).setBold());
                 agregarProcedimientos(doc, nz(c.getProcedimientos()));
                 doc.add(new Paragraph("Por tal razón, ASUMO LOS RIESGOS DE NO TRASLADO BAJO MI PROPIA RESPONSABILIDAD.").setFontSize(8).setMarginTop(4).setBold());
             } else {
-                doc.add(new Paragraph("Con el presente documento doy fe y declaro: Que he sido informado por el Auxiliar de Enfermería/APH de " + ipsNombre + " sobre los procedimientos requeridos para mi atención:").setFontSize(8).setMarginTop(6).setTextAlignment(TextAlignment.JUSTIFIED));
+                doc.add(new Paragraph("Con el presente documento doy fe y declaro: Que he sido informado por el profesional de salud de " + ipsNombre + " sobre los procedimientos requeridos para mi atención:").setFontSize(8).setMarginTop(6).setTextAlignment(TextAlignment.JUSTIFIED));
                 agregarProcedimientos(doc, nz(c.getProcedimientos()));
                 doc.add(new Paragraph("Beneficios").setBold().setFontSize(8).setMarginTop(4));
-                doc.add(new Paragraph("➤ El traslado se hace en ambulancia de transporte asistencial baja complejidad, voy a estar acompañado por personal Auxiliar de enfermería/APH y un conductor debidamente entrenado.").setFontSize(7));
+                doc.add(new Paragraph("➤ El traslado se hace en ambulancia de transporte asistencial baja complejidad, voy a estar acompañado por personal profesional de salud y un conductor debidamente entrenado.").setFontSize(7));
                 doc.add(new Paragraph("➤ El vehículo dispone del material y medicación necesaria para atender al paciente y restablecer las funciones vitales de este, en situaciones críticas como son: alteración del ritmo del corazón, presión arterial, respiración, inconsciencia o traumatismos.").setFontSize(7));
                 doc.add(new Paragraph("➤ Puedo tener un acompañante mayor de edad durante el desplazamiento a un centro hospitalario en caso de ser necesario.").setFontSize(7));
                 doc.add(new Paragraph("➤ Disminución de riesgos de lesiones al paciente o incluso a los propios familiares").setFontSize(7));
@@ -127,11 +127,41 @@ public class ConsentimientoPdfService {
                 doc.add(new Paragraph("Implicaciones").setBold().setFontSize(8).setMarginTop(4));
                 doc.add(new Paragraph("➤ Puede presentar demora en el traslado o la ubicación del paciente y generar tiempo prolongado en la camilla.").setFontSize(7));
                 doc.add(new Paragraph("➤ En la salud mental al estar en un ambiente cerrado o con sonido propios del vehículo y la atención.").setFontSize(7));
-                doc.add(new Paragraph("Dejo constancia de haber comprendido la información que he recibido y acepto que dichos procedimientos o tratamientos se realicen por parte del personal Auxiliar de Enfermería/APH de " + ipsNombre + ", acorde a la resolución 3100 de 2019.").setFontSize(8).setMarginTop(4).setTextAlignment(TextAlignment.JUSTIFIED));
+                doc.add(new Paragraph("Dejo constancia de haber comprendido la información que he recibido y acepto que dichos procedimientos o tratamientos se realicen por parte del personal profesional de salud de " + ipsNombre + ", acorde a la resolución 3100 de 2019.").setFontSize(8).setMarginTop(4).setTextAlignment(TextAlignment.JUSTIFIED));
                 doc.add(new Paragraph("Autorizo al personal antes descrito a realizar los procedimientos necesarios durante mi atención y al traslado a un centro asistencial donde se continúe el tratamiento, si esto fuere necesario.").setFontSize(8).setTextAlignment(TextAlignment.JUSTIFIED));
             }
 
             doc.add(new Paragraph("Ya que la historia clínica es un documento privado, sometido a reserva, que únicamente puede ser conocido por terceros previa autorización del paciente o en los casos previstos por la ley, acepto además que el personal profesional y de auditoría acceda a la información consignada en el reporte de atención TAB.").setFontSize(7).setMarginTop(4).setTextAlignment(TextAlignment.JUSTIFIED));
+
+            // ✅ CUADRO DE OBSERVACIONES
+            String obsText = c.getObservaciones();
+            if (obsText != null && !obsText.isBlank()) {
+                if (obsText.contains("OBSERVACIONES ADICIONALES:")) {
+                    obsText = obsText.substring(obsText.indexOf("OBSERVACIONES ADICIONALES:") + "OBSERVACIONES ADICIONALES:".length()).trim();
+                }
+
+                if (!obsText.isEmpty()) {
+                    Table tObs = new Table(UnitValue.createPercentArray(new float[]{100})).useAllAvailableWidth().setMarginTop(8);
+                    Cell cObs = new Cell()
+                            .setBorder(new SolidBorder(new DeviceRgb(0, 51, 102), 0.5f))
+                            .setPadding(8)
+                            .setBackgroundColor(new DeviceRgb(245, 245, 245));
+
+                    cObs.add(new Paragraph("OBSERVACIONES ADICIONALES").setBold().setFontSize(8).setFontColor(new DeviceRgb(0, 51, 102)));
+                    cObs.add(new Paragraph(obsText).setFontSize(8).setMarginTop(4).setTextAlignment(TextAlignment.JUSTIFIED));
+
+                    tObs.addCell(cObs);
+                    doc.add(tObs);
+                }
+            }
+
+            // ✅ BLOQUE DE AUTORIZACIÓN DE DATOS (Se imprime siempre)
+            Table tDatos = new Table(UnitValue.createPercentArray(new float[]{100})).useAllAvailableWidth().setMarginTop(6);
+            Cell cDatos = new Cell().setBorder(new SolidBorder(new DeviceRgb(0, 51, 102), 0.5f)).setPadding(6).setBackgroundColor(new DeviceRgb(240, 248, 255));
+            cDatos.add(new Paragraph("AUTORIZACIÓN DE TRATAMIENTO DE DATOS PERSONALES").setBold().setFontSize(8).setFontColor(new DeviceRgb(0, 51, 102)).setTextAlignment(TextAlignment.CENTER));
+            cDatos.add(new Paragraph("Autorizo el tratamiento de mis datos personales conforme a la Ley 1581 de 2012 y el Decreto 1377 de 2013 para los fines de la atención en salud, facturación, archivo clínico y cumplimiento de obligaciones legales. Declaro haber sido informado sobre mis derechos de conocer, actualizar, rectificar y suprimir mis datos personales.").setFontSize(7).setMarginTop(4).setTextAlignment(TextAlignment.JUSTIFIED));
+            tDatos.addCell(cDatos);
+            doc.add(tDatos);
 
             // FIRMAS ORGANIZADAS
             Table firmas = new Table(UnitValue.createPercentArray(new float[]{50, 50})).useAllAvailableWidth().setMarginTop(8);
@@ -149,14 +179,6 @@ public class ConsentimientoPdfService {
             firmas.addCell(fHuella);
             doc.add(firmas);
 
-            // PROTECCIÓN DE DATOS
-            Table tDatos = new Table(UnitValue.createPercentArray(new float[]{100})).useAllAvailableWidth().setMarginTop(6);
-            Cell cDatos = new Cell().setBorder(new SolidBorder(new DeviceRgb(0, 51, 102), 0.5f)).setPadding(6).setBackgroundColor(new DeviceRgb(240, 248, 255));
-            cDatos.add(new Paragraph("AUTORIZACIÓN DE TRATAMIENTO DE DATOS PERSONALES").setBold().setFontSize(8).setFontColor(new DeviceRgb(0, 51, 102)).setTextAlignment(TextAlignment.CENTER));
-            cDatos.add(new Paragraph("Autorizo el tratamiento de mis datos personales conforme a la Ley 1581 de 2012 y el Decreto 1377 de 2013 para los fines de la atención en salud, facturación, archivo clínico y cumplimiento de obligaciones legales. Declaro haber sido informado sobre mis derechos de conocer, actualizar, rectificar y suprimir mis datos personales.").setFontSize(7).setMarginTop(4).setTextAlignment(TextAlignment.JUSTIFIED));
-            tDatos.addCell(cDatos);
-            doc.add(tDatos);
-
             // ACOMPAÑANTE Y PROFESIONAL FUSIONADO
             Table datosAcomp = new Table(UnitValue.createPercentArray(new float[]{50, 50})).useAllAvailableWidth().setMarginTop(6);
 
@@ -167,7 +189,7 @@ public class ConsentimientoPdfService {
             datosAcomp.addCell(cAcomp);
 
             Cell cProf = new Cell().setBorder(new SolidBorder(new DeviceRgb(0, 51, 102), 0.5f)).setPadding(4);
-            cProf.add(new Paragraph("PROFESIONAL / APH").setBold().setFontSize(8).setFontColor(new DeviceRgb(0, 51, 102)).setTextAlignment(TextAlignment.CENTER));
+            cProf.add(new Paragraph("PROFESIONAL DE SALUD").setBold().setFontSize(8).setFontColor(new DeviceRgb(0, 51, 102)).setTextAlignment(TextAlignment.CENTER));
             cProf.add(new Paragraph(nz(c.getNombreAuxiliar())).setFontSize(8).setTextAlignment(TextAlignment.CENTER).setMarginTop(2));
             cProf.add(new Paragraph("CC: " + nz(c.getDocumentoAuxiliar()) + " | REG: " + nz(c.getRegistroAuxiliar())).setFontSize(7).setTextAlignment(TextAlignment.CENTER));
             addImage(cProf, c.getFirmaProfesional());

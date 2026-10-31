@@ -31,6 +31,7 @@ public class TenantSchemaFixer implements ApplicationRunner {
 
     private void updateConsentimientosColumns(Long ipsId) {
         String[] columns = {
+                "ALTER TABLE consentimientos ADD COLUMN IF NOT EXISTS observaciones TEXT",
                 "ALTER TABLE consentimientos ADD COLUMN IF NOT EXISTS documento_auxiliar VARCHAR(50)",
                 "ALTER TABLE consentimientos ADD COLUMN IF NOT EXISTS parentesco_acompanante VARCHAR(100)",
                 "ALTER TABLE consentimientos ADD COLUMN IF NOT EXISTS firma_profesional TEXT",

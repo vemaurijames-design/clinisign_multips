@@ -16,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +33,10 @@ public class ConsentimientoService {
     private final PlantillaDocumentoRepository plantillaRepo;
 
     public List<Consentimiento> listar() { return repo.findAll(); }
-    public Consentimiento obtener(Long id) { return repo.findById(id).orElseThrow(() -> new RuntimeException("No encontrado")); }
+
+    public Consentimiento obtener(Long id) {
+        return repo.findById(id).orElseThrow(() -> new RuntimeException("No encontrado"));
+    }
 
     public List<Consentimiento> porDocumento(String documento) {
         return repo.findByDocumentoOrderByIdDesc(documento);
@@ -43,14 +45,17 @@ public class ConsentimientoService {
     public Consentimiento crear(Map<String, Object> body) {
         Consentimiento c = new Consentimiento();
         HistoriaClinica hc = null;
+
         if (body.get("historiaClinicaId") != null && !body.get("historiaClinicaId").toString().isBlank()) {
             hc = hcRepo.findById(Long.valueOf(body.get("historiaClinicaId").toString())).orElse(null);
             c.setHistoriaClinica(hc);
         }
+
         String tipo = str(body.getOrDefault("tipo", "CONSENTIMIENTO"));
         c.setTipo(tipo);
         c.setCodigo("DESISTIMIENTO".equalsIgnoreCase(tipo) ? "HC-FM-06" : "HC-FM-04");
         c.setVersion("01");
+
         try {
             if (body.get("plantillaId") != null && !body.get("plantillaId").toString().isBlank()) {
                 PlantillaDocumento pl = plantillaRepo.findById(Long.valueOf(body.get("plantillaId").toString())).orElse(null);
@@ -69,15 +74,19 @@ public class ConsentimientoService {
         } catch (Exception e) {
             log.warn("Plantilla no aplicada: {}", e.getMessage());
         }
+
         c.setCalidad(str(body.get("calidad")));
+
         if (notBlank(body.get("procedimientos"))) c.setProcedimientos(str(body.get("procedimientos")));
         if (notBlank(body.get("beneficios"))) c.setBeneficios(str(body.get("beneficios")));
         if (notBlank(body.get("alternativas"))) c.setAlternativas(str(body.get("alternativas")));
         if (notBlank(body.get("riesgos"))) c.setRiesgos(str(body.get("riesgos")));
         if (notBlank(body.get("observaciones"))) c.setObservaciones(str(body.get("observaciones")));
+
         c.setFirma(str(body.get("firma")));
         c.setDocumento(str(body.get("documento")));
         c.setTelefono(str(body.get("telefono")));
+
         if (!notBlank(c.getDocumento()) && hc != null && hc.getPaciente() != null) {
             c.setDocumento(hc.getPaciente().getDocumento());
         }
@@ -87,29 +96,35 @@ public class ConsentimientoService {
         if (!notBlank(c.getProcedimientos())) {
             c.setProcedimientos("Inmovilización y traslado en camilla; Administración de oxígeno; Administración de medicamentos; Traslado y transporte.");
         }
+
         c.setHuellaDigital(str(body.get("huellaDigital")));
         c.setNombreAcompanante(str(body.get("nombreAcompanante")));
         c.setDocumentoAcompanante(str(body.get("documentoAcompanante")));
         c.setParentescoAcompanante(str(body.get("parentescoAcompanante")));
         c.setNombreAuxiliar(str(body.get("nombreAuxiliar")));
+
         if (!notBlank(c.getNombreAuxiliar())) {
             c.setNombreAuxiliar(ActorContext.nombre() != null ? ActorContext.nombre() : ActorContext.email());
         }
+
         c.setRegistroAuxiliar(str(body.get("registroAuxiliar")));
         c.setDocumentoAuxiliar(str(body.get("documentoAuxiliar")));
         c.setFirmaProfesional(str(body.get("firmaProfesional")));
         c.setRegistradoPor(ActorContext.etiqueta());
+
         String tipoNum = c.getTipo() != null ? c.getTipo() : "CONSENTIMIENTO";
         try {
             c.setConsecutivo((int) repo.countByTipo(tipoNum) + 1);
         } catch (Exception e) {
             c.setConsecutivo(1);
         }
+
         boolean tieneHuella = notBlank(c.getHuellaDigital());
         boolean tieneFirma = notBlank(c.getFirma());
         c.setFirmado(tieneFirma || tieneHuella);
         c.setCorreoEnviado(false);
         c = repo.save(c);
+
         try {
             auditoria.registrar("CONSENTIMIENTOS", "CREAR", c.getId(),
                     c.getCodigo() + "-" + c.getConsecutivo() + " doc " + c.getDocumento());
@@ -139,17 +154,21 @@ public class ConsentimientoService {
     public Consentimiento enviarCorreo(Long id, String destino) {
         Consentimiento c = repo.findById(id).orElseThrow(() -> new RuntimeException("Documento no encontrado"));
         if (!notBlank(destino)) destino = c.getCorreoDestino();
+
         if (!notBlank(destino) && TenantContext.getIpsId() != null) {
             Ips ips = ipsRepository.findById(TenantContext.getIpsId()).orElse(null);
             if (ips != null && notBlank(ips.getCorreo())) destino = ips.getCorreo();
         }
+
         if (!notBlank(destino)) {
             throw new RuntimeException("Indique el correo o configure el correo institucional de la IPS.");
         }
+
         Ips ips = TenantContext.getIpsId() != null ? ipsRepository.findById(TenantContext.getIpsId()).orElse(null) : null;
         String ipsNombre = ips != null && ips.getNombre() != null ? ips.getNombre() : "IPS";
         String ipsCorreo = ips != null && ips.getCorreo() != null ? ips.getCorreo() : "";
         String ipsTel = ips != null && ips.getTelefono() != null ? ips.getTelefono() : "";
+
         String html = "<div style='font-family:Arial,sans-serif;color:#1a2a4a'>"
                 + "<h2 style='color:#0a3d7a'>" + ipsNombre + "</h2>"
                 + "<p>Se adjunta el documento clínico generado en CliniSign.</p>"
@@ -166,10 +185,13 @@ public class ConsentimientoService {
                 + "<b>Teléfono IPS:</b> " + ipsTel + "</p>"
                 + "<p style='font-size:12px;color:#666'>Documento de respaldo institucional. Historia clínica reservada (Ley 23 de 1981 y Res. 1995 de 1999).</p>"
                 + "</div>";
+
         byte[] pdf = pdfService.generarPdf(id);
+
         emailService.enviarPdf(TenantContext.getIpsId(), destino,
                 c.getTipo() + " " + c.getCodigo() + "-" + c.getConsecutivo() + " doc " + c.getDocumento(),
                 html, pdf, c.getCodigo() + "-" + c.getConsecutivo() + ".pdf");
+
         c.setCorreoEnviado(true);
         c.setCorreoDestino(destino);
         c.setFechaEnvio(new Date());
@@ -182,6 +204,7 @@ public class ConsentimientoService {
         repo.save(cons);
         auditoria.registrar("CONSENTIMIENTO", "ACTIVAR", id, ActorContext.etiqueta());
     }
+
     @Transactional
     public void anular(Long id) {
         var c = repo.findById(id)
@@ -201,6 +224,8 @@ public class ConsentimientoService {
             log.warn("No se pudo registrar auditoría: {}", e.getMessage());
         }
     }
+
     private String str(Object o) { return o == null ? null : o.toString(); }
+
     private boolean notBlank(Object o) { return o != null && !o.toString().isBlank(); }
 }

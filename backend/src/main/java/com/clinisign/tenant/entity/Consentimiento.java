@@ -2,7 +2,6 @@ package com.clinisign.tenant.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -34,7 +33,10 @@ public class Consentimiento {
     private String beneficios;
     private String alternativas;
     private String riesgos;
+
+    @Column(columnDefinition = "TEXT")
     private String observaciones;
+
     private String firma;
     @Column(name = "huella_digital")
     private String huellaDigital;
